@@ -6,14 +6,14 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Settings } from '@/lib/types';
+import { resolveTheme } from '@/lib/theme';
 
 export function SettingsForm({ initial }: { initial: Settings }) {
   const [pending, start] = useTransition();
   const apply = (patch: Partial<Settings>) => start(() => { void updateSettings(patch as any); });
   const setTheme = (theme: any) => {
     localStorage.setItem('theme', theme);
-    const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.dataset.theme = resolveTheme(theme, matchMedia('(prefers-color-scheme: dark)').matches);
     apply({ theme });
   };
   const setReduce = (reduce_motion: boolean) => {

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { resolveTheme } from '@/lib/theme';
 
 export function ThemeToggle() {
   const [pref, setPref] = useState<'dark' | 'light' | 'system'>('dark');
@@ -13,8 +14,7 @@ export function ThemeToggle() {
   const apply = (p: 'dark' | 'light' | 'system') => {
     setPref(p);
     localStorage.setItem('theme', p);
-    const dark = p === 'dark' || (p === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.dataset.theme = resolveTheme(p, matchMedia('(prefers-color-scheme: dark)').matches);
   };
   const Icon = pref === 'dark' ? Moon : pref === 'light' ? Sun : Monitor;
   return (

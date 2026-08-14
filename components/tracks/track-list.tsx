@@ -13,7 +13,7 @@ export function TrackList(props: {
   onToggle?: (itemId: string, next: ProgressStatus) => void;
 }) {
   const { optimistic, toggle } = useProgressOptimistic(props.progress);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
   const statusOf = (id: string) => optimistic.find((p) => p.item_id === id)?.status ?? 'not_started';
   const inScope = (id: string) => props.items.some((i) => i.id === id);
   const doneCount = () => optimistic.filter((p) => p.status === 'done' && inScope(p.item_id)).length;

@@ -182,7 +182,7 @@ export const SEED_ITEMS: Item[] = [
   { id: 'se-res-30', track: 'resource', sort_order: 30, title: 'Render Documentation', metadata: { type: 'doc', url: 'https://docs.render.com/' } },
   { id: 'se-res-31', track: 'resource', sort_order: 31, title: 'Railway Documentation', metadata: { type: 'doc', url: 'https://docs.railway.app/' } },
   { id: 'se-res-32', track: 'resource', sort_order: 32, title: 'Fly.io Documentation', metadata: { type: 'doc', url: 'https://fly.io/docs/' } },
-  // Articles (8)
+  // Articles (7) + 1 doc
   { id: 'se-res-33', track: 'resource', sort_order: 33, title: 'Designing a Rate Limiter: 4 Algorithms, Real Trade-Offs', metadata: { type: 'article', url: 'https://dev.to/gabrielanhaia/designing-a-rate-limiter-4-algorithms-real-trade-offs-3h5' } },
   { id: 'se-res-34', track: 'resource', sort_order: 34, title: 'How API Rate Limiting Works', metadata: { type: 'article', url: 'https://mohamed-hendawy.medium.com/how-api-rate-limiting-works-fixed-window-token-bucket-sliding-window-explained-c16521f3e0e6' } },
   { id: 'se-res-35', track: 'resource', sort_order: 35, title: 'The different types of testing in software (Atlassian)', metadata: { type: 'article', url: 'https://www.atlassian.com/continuous-delivery/software-testing/types-of-software-testing' } },

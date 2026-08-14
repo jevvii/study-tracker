@@ -10,7 +10,7 @@ import type { Item, Progress, ProgressStatus } from '@/lib/types';
 
 export function ThisWeekCard({ items, progress, week }: { items: Item[]; progress: Progress[]; week: number }) {
   const { optimistic, toggle } = useProgressOptimistic(progress);
-  const [pending, start] = useTransition();
+  const [, start] = useTransition();
   const statusOf = (id: string) => optimistic.find((p) => p.item_id === id)?.status ?? 'not_started';
   const inScope = (id: string) => items.some((i) => i.id === id);
   const doneCount = () => optimistic.filter((p) => p.status === 'done' && inScope(p.item_id)).length;
