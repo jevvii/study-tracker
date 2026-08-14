@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // SDD workflow scratch/planning directory (gitignored, not app code).
+    ".superpowers/**",
   ]),
 ]);
 
