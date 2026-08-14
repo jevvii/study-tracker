@@ -47,6 +47,10 @@ export function nextStreak(prev: Streak, today: string): Streak {
   };
 }
 
+export function shouldCelebrate(prevDone: number, nextDone: number, milestones: Set<string>, itemId: string): boolean {
+  return nextDone > prevDone && milestones.has(itemId);
+}
+
 export function currentWeekNumber(items: Item[], progress: Progress[]): number {
   const doneIds = new Set(progress.filter((p) => p.status === 'done').map((p) => p.item_id));
   const weeks = items.filter((i) => i.track === 'plan' && i.metadata.week).map((i) => i.metadata.week!);

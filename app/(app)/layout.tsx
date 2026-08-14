@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { MotionToggle } from '@/components/motion-toggle';
+import { CommandMenu } from '@/components/command-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="font-semibold tracking-tight">JM <span className="text-[var(--text-muted)] font-normal">Study Tracker</span></Link>
           <div className="flex items-center gap-1">
+            <CommandMenu />
             <MotionToggle />
             <ThemeToggle />
             <Avatar className="size-8 ml-1"><AvatarFallback className="bg-[var(--surface-2)] text-xs">{initials}</AvatarFallback></Avatar>
