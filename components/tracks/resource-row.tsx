@@ -15,7 +15,7 @@ export function ResourceList({ items, progress }: { items: Item[]; progress: Pro
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1 text-xs rounded-full border ${filter === f ? 'bg-[var(--accent)] text-[var(--accent-contrast)] border-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
+            className={`px-3 py-1 text-xs rounded-full border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] ${filter === f ? 'bg-[var(--accent)] text-[var(--accent-contrast)] border-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
           >
             {f}
           </button>
@@ -43,7 +43,7 @@ function ResourceRow({ item, progress }: { item: Item; progress?: Progress }) {
       <span className={`text-sm flex-1 ${done ? 'line-through text-[var(--text-muted)]' : ''}`}>{item.title}</span>
       <span className="text-xs uppercase tracking-wider text-[var(--text-muted)]">{item.metadata.type}</span>
       {item.metadata.url && (
-        <a href={item.metadata.url} target="_blank" rel="noreferrer" className="text-[var(--accent)]" aria-label={`Open ${item.title}`}>
+        <a href={item.metadata.url} target="_blank" rel="noreferrer" className="text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]" aria-label={`Open ${item.title}`}>
           <ExternalLink className="size-4" />
         </a>
       )}

@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="font-semibold tracking-tight">JM <span className="text-[var(--text-muted)] font-normal">Study Tracker</span></Link>
+          <Link href="/" className="font-semibold tracking-tight rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]">JM <span className="text-[var(--text-muted)] font-normal">Study Tracker</span></Link>
           <div className="flex items-center gap-1">
             <CommandMenu />
             <MotionToggle />
