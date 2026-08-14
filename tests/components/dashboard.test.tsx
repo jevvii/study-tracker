@@ -32,6 +32,6 @@ describe('Dashboard', () => {
     render(ui);
     expect(screen.getByText(/33%/)).toBeInTheDocument(); // 1 of 3 done
     expect(screen.getByText(/4/)).toBeInTheDocument(); // streak
-    expect(screen.getByText('Draw Architecture')).toBeInTheDocument();
+    expect(screen.getByText('Wk1 focus')).toBeInTheDocument();
   });
 });

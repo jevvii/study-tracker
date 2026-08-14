@@ -11,9 +11,7 @@ export default async function Dashboard() {
   const { items, progress, streak, timeLogs } = await getDashboard();
   const overall = overallProgress(items, progress);
   const week = currentWeekNumber(items, progress);
-  // Plan items are filtered to the current week; non-plan items (project/topic/resource)
-  // are not week-bound, so they are always shown in the "This Week" card.
-  const weekItems = items.filter((i) => (i.track === 'plan' ? i.metadata.week === week : true));
+  const weekItems = items.filter((i) => i.track === 'plan' && i.metadata.week === week);
   const hours = weeklyHours(timeLogs, 22 * 60, new Date());
   return (
     <BentoGrid>
