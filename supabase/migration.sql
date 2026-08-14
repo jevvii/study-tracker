@@ -3,7 +3,7 @@ create type progress_status as enum ('not_started','in_progress','done');
 create type theme_pref as enum ('dark','light','system');
 
 create table items (
-  id uuid primary key,
+  id text primary key,
   track track_t not null,
   sort_order int not null,
   title text not null,
@@ -14,7 +14,7 @@ create table items (
 
 create table progress (
   user_id uuid not null references auth.users(id) on delete cascade,
-  item_id uuid not null references items(id) on delete cascade,
+  item_id text not null references items(id) on delete cascade,
   status progress_status not null default 'not_started',
   completed_at timestamptz,
   notes text,
@@ -27,7 +27,7 @@ create table time_logs (
   user_id uuid not null references auth.users(id) on delete cascade,
   date date not null,
   minutes int not null check (minutes > 0),
-  item_id uuid references items(id) on delete set null,
+  item_id text references items(id) on delete set null,
   note text,
   created_at timestamptz not null default now()
 );
