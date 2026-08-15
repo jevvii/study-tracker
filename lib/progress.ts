@@ -1,4 +1,4 @@
-import type { Item, Progress, Streak, TimeLog, Track } from '@/lib/types';
+import type { Item, JournalEntry, Progress, Streak, TimeLog, Track } from '@/lib/types';
 
 export interface Counts { done: number; total: number; pct: number; }
 
@@ -59,4 +59,117 @@ export function currentWeekNumber(items: Item[], progress: Progress[]): number {
     if (weekItems.some((i) => !doneIds.has(i.id))) return w;
   }
   return 12;
+}
+
+/** Encouraging micro-copy keyed to streak length (spec §4). */
+export function streakMicroCopy(streak: number): string {
+  if (streak >= 8) return 'Unstoppable.';
+  if (streak >= 4) return "You're on fire.";
+  if (streak >= 1) return 'Building momentum.';
+  return 'A single step starts it.';
+}
+
+/** Time-of-day greeting (spec §4 Hero). */
+export function greeting(d: Date): string {
+  const h = d.getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+export interface DailyBucket { date: string; minutes: number; }
+
+/** Minutes logged per weekday for the ISO week containing `today` (Mon..Sun). */
+export function dailyBreakdown(logs: TimeLog[], today: Date): DailyBucket[] {
+  const start = isoWeekStart(today);
+  const days: DailyBucket[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    const minutes = logs
+      .filter((l) => l.date === key)
+      .reduce((sum, l) => sum + l.minutes, 0);
+    days.push({ date: key, minutes });
+  }
+  return days;
+}
+
+export interface WeekReview {
+  weekStart: string;
+  thisWeekMinutes: number;
+  lastWeekMinutes: number;
+  itemsDone: Item[];
+  itemsDoneLastWeek: number;
+  daily: DailyBucket[];
+  moodTrend: (number | null)[];
+}
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export function dayLabel(isoDate: string): string {
+  const d = new Date(isoDate + 'T00:00:00Z');
+  return DAY_LABELS[(d.getUTCDay() + 6) % 7];
+}
+
+/**
+ * Derives the weekly review narrative from existing data — no new tables (spec §10).
+ * `today` is passed in for deterministic testing.
+ */
+export function weeklyReviewData(
+  items: Item[], progress: Progress[], logs: TimeLog[], journalEntries: JournalEntry[], today: Date,
+): WeekReview {
+  const start = isoWeekStart(today);
+  const weekStart = start.toISOString().slice(0, 10);
+  const lastStart = new Date(start.getTime() - 7 * 86400000);
+
+  const inRange = (date: string, fromMs: number) => {
+    const t = new Date(date + 'T00:00:00Z').getTime();
+    return t >= fromMs && t < fromMs + 7 * 86400000;
+  };
+
+  const thisWeekMinutes = logs.filter((l) => inRange(l.date, start.getTime())).reduce((s, l) => s + l.minutes, 0);
+  const lastWeekMinutes = logs.filter((l) => inRange(l.date, lastStart.getTime())).reduce((s, l) => s + l.minutes, 0);
+
+  const daily = dailyBreakdown(logs, today);
+
+  const doneThisWeek = progress.filter((p) => {
+    if (p.status !== 'done' || !p.completed_at) return false;
+    const t = new Date(p.completed_at).getTime();
+    return t >= start.getTime() && t < start.getTime() + 7 * 86400000;
+  }).map((p) => items.find((i) => i.id === p.item_id)).filter(Boolean) as Item[];
+
+  const doneLastWeek = progress.filter((p) => {
+    if (p.status !== 'done' || !p.completed_at) return false;
+    const t = new Date(p.completed_at).getTime();
+    return t >= lastStart.getTime() && t < lastStart.getTime() + 7 * 86400000;
+  }).length;
+
+  // Mood trend: most recent entry per day for the ISO week (Mon..Sun), oldest→newest.
+  const moodTrend: (number | null)[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    const dayEntries = journalEntries
+      .filter((e) => e.date === key && e.mood != null)
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    moodTrend.push(dayEntries[0]?.mood ?? null);
+  }
+
+  return {
+    weekStart,
+    thisWeekMinutes,
+    lastWeekMinutes,
+    itemsDone: doneThisWeek,
+    itemsDoneLastWeek: doneLastWeek,
+    daily,
+    moodTrend,
+  };
+}
+
+export function currentIsoWeekKey(d: Date): string {
+  return isoWeekStart(d).toISOString().slice(0, 10);
+}
+
+export function isMonday(d: Date): boolean {
+  return d.getDay() === 1;
 }

@@ -1,12 +1,14 @@
 import { getTrack } from '@/lib/data';
+import { trackCounts } from '@/lib/progress';
 import { TrackPage } from '@/components/tracks/track-page';
-import { ResourceList } from '@/components/tracks/resource-row';
+import { TrackBrowser } from '@/components/tracks/track-browser';
 
 export default async function ResourcesPage() {
-  const { items, progress } = await getTrack('resource');
+  const { items, progress, timeLogs } = await getTrack('resource');
+  const counts = trackCounts(items, progress, 'resource');
   return (
-    <TrackPage title="Resources" subtitle="Books, courses, docs, and articles from the guide.">
-      <ResourceList items={items} progress={progress} />
+    <TrackPage title="Resources" subtitle="Books, courses, docs, and articles from the guide." backHref="/" counts={counts}>
+      <TrackBrowser track="resource" items={items} progress={progress} timeLogs={timeLogs} />
     </TrackPage>
   );
 }

@@ -183,6 +183,31 @@
   }
 }
 
+/* Focus-mode dim veil: a passive overlay between the starfield (z-0) and
+   content (z-10). Toggled via the `data-dim-starfield` attribute on <html>
+   by the Focus page — no Three.js/worker changes required (spec §7). */
+.starfield-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0);
+  transition: background 400ms ease;
+}
+:root[data-dim-starfield="true"] .starfield-veil {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Streak flame idle pulse (spec §14). Killed by the reduce-motion rules below. */
+@keyframes flame-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+.flame-pulse {
+  animation: flame-pulse 1500ms ease-in-out infinite;
+  display: inline-block;
+}
+
 /* In-app + OS reduce-motion gating (spec): animations collapse to ~instant. */
 .reduce-motion *,
 .reduce-motion *::before,

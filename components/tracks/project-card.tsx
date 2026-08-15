@@ -1,36 +1,55 @@
 'use client';
-import { useTransition } from 'react';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toggleProgress } from '@/lib/data';
-import { shouldCelebrate } from '@/lib/progress';
-import { fireConfetti } from '@/components/confetti';
-import type { Item, Progress, ProgressStatus } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import type { Item, ProgressStatus } from '@/lib/types';
 
-export function ProjectCard({ item, progress }: { item: Item; progress?: Progress }) {
-  const done = progress?.status === 'done';
-  const [pending, start] = useTransition();
-  const onCheckedChange = () => {
-    const next: ProgressStatus = done ? 'not_started' : 'done';
-    const prevDone = done ? 1 : 0;
-    const nextDone = next === 'done' ? 1 : 0;
-    const milestones = new Set([item.id]);
-    if (next === 'done' && shouldCelebrate(prevDone, nextDone, milestones, item.id)) {
-      fireConfetti();
-    }
-    start(() => { void toggleProgress(item.id, next); });
-  };
+const STATUS_LABEL: Record<ProgressStatus, string> = {
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  done: 'Done',
+};
+
+export function ProjectCard({
+  item,
+  status,
+  onToggle,
+  onSelect,
+}: {
+  item: Item;
+  status: ProgressStatus;
+  onToggle: (itemId: string, next: ProgressStatus) => void;
+  onSelect?: (item: Item) => void;
+}) {
+  const done = status === 'done';
+
+  const chipClass =
+    status === 'done' ? 'border-[var(--success)] text-[var(--success)]'
+      : status === 'in_progress' ? 'border-[var(--warning)] text-[var(--warning)]'
+        : 'border-[var(--border)] text-[var(--text-muted)]';
+
   return (
-    <Card className="bg-[var(--surface)] border-[var(--border)] p-4">
+    <Card className={cn('bg-[var(--surface)]/70 border-[var(--border)] p-4 transition-colors hover:border-[var(--accent)]/60', done && 'opacity-80')}>
       <div className="flex items-start gap-3">
         <Checkbox
           checked={done}
-          disabled={pending}
-          onCheckedChange={onCheckedChange}
+          onCheckedChange={() => onToggle(item.id, done ? 'not_started' : 'done')}
+          aria-label={`Mark ${item.title} complete`}
         />
-        <div>
-          <h3 className={`font-medium ${done ? 'line-through text-[var(--text-muted)]' : ''}`}>{item.title}</h3>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className={cn('font-medium', done && 'line-through text-[var(--text-muted)]')}>{item.title}</h3>
+            <span className={cn('shrink-0 text-xs rounded-full border px-2 py-0.5', chipClass)}>{STATUS_LABEL[status]}</span>
+          </div>
           {item.description && <p className="text-sm text-[var(--text-muted)] mt-1">{item.description}</p>}
+          {onSelect && (
+            <button
+              onClick={() => onSelect(item)}
+              className="mt-2 text-xs text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+            >
+              Details →
+            </button>
+          )}
         </div>
       </div>
     </Card>
