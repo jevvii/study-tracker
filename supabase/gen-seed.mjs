@@ -4,5 +4,5 @@ const esc = (s) => String(s ?? '').replace(/'/g, "''");
 const values = SEED_ITEMS.map(i =>
   `('${i.id}','${i.track}',${i.sort_order},'${esc(i.title)}',${i.description ? `'${esc(i.description)}'` : 'NULL'},'${JSON.stringify(i.metadata).replace(/'/g, "''")}'::jsonb)`
 ).join(',\n');
-const sql = `insert into items (id, track, sort_order, title, description, metadata) values\n${values}\non conflict (id) do nothing;\n`;
+const sql = `insert into items (id, track, sort_order, title, description, metadata) values\n${values}\non conflict (id) do update set track=excluded.track, sort_order=excluded.sort_order, title=excluded.title, description=excluded.description, metadata=excluded.metadata;\n`;
 writeFileSync(new URL('./seed.sql', import.meta.url), sql);

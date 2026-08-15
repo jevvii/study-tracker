@@ -5,6 +5,8 @@ export interface ItemMetadata {
   week?: number; month?: number; hours?: number; kind?: 'reading' | 'video' | 'hands_on' | 'focus';
   section?: number; subsections?: number;
   type?: 'book' | 'video' | 'doc' | 'article'; url?: string; author?: string;
+  // For resources: the topic ids (se-topic-N) this resource covers. Many-to-many.
+  topics?: string[];
 }
 export interface Item {
   id: string; track: Track; sort_order: number; title: string; description?: string; metadata: ItemMetadata;

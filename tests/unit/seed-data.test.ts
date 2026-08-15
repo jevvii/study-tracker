@@ -26,4 +26,13 @@ describe('seed data', () => {
     const ids = SEED_ITEMS.map(i => i.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+  it('every resource topics array references valid topic ids', () => {
+    const topicIds = new Set(SEED_ITEMS.filter(i => i.track === 'topic').map(i => i.id));
+    for (const r of SEED_ITEMS.filter(i => i.track === 'resource')) {
+      if (r.metadata.topics) {
+        expect(r.metadata.topics.length).toBeGreaterThan(0);
+        for (const t of r.metadata.topics) expect(topicIds.has(t)).toBe(true);
+      }
+    }
+  });
 });

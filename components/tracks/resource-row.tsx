@@ -30,7 +30,7 @@ export function ResourceList({ items, progress }: { items: Item[]; progress: Pro
   );
 }
 
-function ResourceRow({ item, progress }: { item: Item; progress?: Progress }) {
+export function ResourceRow({ item, progress }: { item: Item; progress?: Progress }) {
   const done = progress?.status === 'done';
   const [pending, start] = useTransition();
   return (
