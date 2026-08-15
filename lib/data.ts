@@ -106,7 +106,7 @@ export async function logTime(minutes: number, date: string, itemId?: string) {
   return { ok: true };
 }
 
-export async function updateSettings(patch: Partial<Pick<Settings, 'theme' | 'reduce_motion' | 'weekly_target_minutes' | 'starfield_on' | 'confetti_on'>>) {
+export async function updateSettings(patch: Partial<Pick<Settings, 'theme' | 'reduce_motion' | 'weekly_target_minutes' | 'starfield_on' | 'confetti_on' | 'focus_minutes' | 'short_break_minutes' | 'long_break_minutes'>>) {
   const { supabase, userId } = await uid();
   const { error } = await supabase.from('settings').update(patch).eq('user_id', userId);
   if (error) throw error;
@@ -220,14 +220,15 @@ export async function syncAchievements(supabase?: Awaited<ReturnType<typeof crea
 // ---------------------------------------------------------------------------
 export async function getFocusPageData() {
   const { supabase, userId } = await uid();
-  const [items, progress, logs] = await Promise.all([
+  const [items, progress, logs, settings] = await Promise.all([
     supabase.from('items').select('*').order('sort_order'),
     supabase.from('progress').select('*').eq('user_id', userId),
     supabase.from('time_logs').select('*').eq('user_id', userId),
+    supabase.from('settings').select('*').eq('user_id', userId).maybeSingle(),
   ]);
   const today = new Date().toISOString().slice(0, 10);
   const todayLogs = ((logs.data ?? []) as TimeLog[]).filter((l) => l.date === today);
-  return { items: items.data ?? [], progress: progress.data ?? [], todayLogs };
+  return { items: items.data ?? [], progress: progress.data ?? [], todayLogs, settings: (settings.data as Settings | null) ?? null };
 }
 
 // ---------------------------------------------------------------------------

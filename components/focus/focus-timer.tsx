@@ -1,14 +1,15 @@
 'use client';
 import { useEffect, useMemo, useState, useTransition } from 'react';
-import { logTime } from '@/lib/data';
+import { logTime, updateSettings } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlassCard } from '@/components/dashboard/glass-card';
-import type { Item, TimeLog } from '@/lib/types';
+import type { Item, Settings, TimeLog } from '@/lib/types';
 
 type Phase = 'focus' | 'short' | 'long';
-const DURATIONS: Record<Phase, number> = { focus: 25 * 60, short: 5 * 60, long: 15 * 60 };
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
+const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 } as const;
+const clampMinutes = (n: number) => Math.max(1, Math.min(120, Number.isFinite(n) ? Math.round(n) : 1));
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
@@ -39,15 +40,29 @@ function chime() {
   }
 }
 
-export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: TimeLog[] }) {
+export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; todayLogs: TimeLog[]; settings: Settings | null }) {
+  // Configured durations (seconds), derived from persisted settings with built-in defaults.
+  const durations = useMemo<Record<Phase, number>>(() => ({
+    focus: (settings?.focus_minutes ?? DEFAULT_MINUTES.focus) * 60,
+    short: (settings?.short_break_minutes ?? DEFAULT_MINUTES.short) * 60,
+    long: (settings?.long_break_minutes ?? DEFAULT_MINUTES.long) * 60,
+  }), [settings?.focus_minutes, settings?.short_break_minutes, settings?.long_break_minutes]);
+
   const [phase, setPhase] = useState<Phase>('focus');
-  const [secondsLeft, setSecondsLeft] = useState(DURATIONS.focus);
+  const [secondsLeft, setSecondsLeft] = useState(durations.focus);
   const [running, setRunning] = useState(false);
   const [focusCount, setFocusCount] = useState(0);
   const [itemId, setItemId] = useState<string>('');
   const [, start] = useTransition();
 
-  const total = DURATIONS[phase];
+  // Duration editor state — seeded from settings and re-synced when settings change.
+  const [showDurations, setShowDurations] = useState(false);
+  const [editFocus, setEditFocus] = useState(settings?.focus_minutes ?? DEFAULT_MINUTES.focus);
+  const [editShort, setEditShort] = useState(settings?.short_break_minutes ?? DEFAULT_MINUTES.short);
+  const [editLong, setEditLong] = useState(settings?.long_break_minutes ?? DEFAULT_MINUTES.long);
+  const [saving, saveStart] = useTransition();
+
+  const total = durations[phase];
   const elapsed = total - secondsLeft;
   const ringColor = phase === 'focus' ? 'var(--accent)' : 'var(--warning)';
 
@@ -69,6 +84,21 @@ export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: Tim
     document.documentElement.dataset.dimStarfield = phase === 'focus' && running ? 'true' : 'false';
   }, [phase, running]);
   useEffect(() => () => { delete document.documentElement.dataset.dimStarfield; }, []);
+
+  // Keep the editor fields in sync when persisted settings change (e.g. after a save revalidates).
+  useEffect(() => {
+    setEditFocus(settings?.focus_minutes ?? DEFAULT_MINUTES.focus);
+    setEditShort(settings?.short_break_minutes ?? DEFAULT_MINUTES.short);
+    setEditLong(settings?.long_break_minutes ?? DEFAULT_MINUTES.long);
+  }, [settings?.focus_minutes, settings?.short_break_minutes, settings?.long_break_minutes]);
+
+  // When saved durations change, apply the new length to the current phase and pause,
+  // so a running session is never silently stretched or truncated.
+  useEffect(() => {
+    setSecondsLeft(durations[phase]);
+    setRunning(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [durations]);
 
   // Keyboard shortcuts: Space=start/pause, R=reset, S=skip.
   useEffect(() => {
@@ -92,21 +122,32 @@ export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: Tim
     start(() => { void logTime(minutes, today, itemId || undefined); });
   };
 
+  // Persist the edited durations; revalidation flows the new values back as props.
+  const saveDurations = () => {
+    saveStart(() => {
+      void updateSettings({
+        focus_minutes: clampMinutes(editFocus),
+        short_break_minutes: clampMinutes(editShort),
+        long_break_minutes: clampMinutes(editLong),
+      });
+    });
+  };
+
   // Advance to the next phase. Logs focus time and bumps the long-break cadence
   // only on a *completed* focus segment (not on skip).
   function completeSegment() {
     chime();
     if (phase === 'focus') {
-      logFocus(DURATIONS.focus);
+      logFocus(durations.focus);
       const next = focusCount + 1;
       setFocusCount(next);
       const breakPhase: Phase = next % 4 === 0 ? 'long' : 'short';
       setPhase(breakPhase);
-      setSecondsLeft(DURATIONS[breakPhase]);
+      setSecondsLeft(durations[breakPhase]);
       setRunning(true); // auto-start the break
     } else {
       setPhase('focus');
-      setSecondsLeft(DURATIONS.focus);
+      setSecondsLeft(durations.focus);
       setRunning(false); // pause before the next focus
     }
   }
@@ -117,18 +158,18 @@ export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: Tim
       if (elapsed >= 60) logFocus(elapsed);
       const breakPhase: Phase = focusCount % 4 === 0 && focusCount > 0 ? 'long' : 'short';
       setPhase(breakPhase);
-      setSecondsLeft(DURATIONS[breakPhase]);
+      setSecondsLeft(durations[breakPhase]);
       setRunning(true);
     } else {
       setPhase('focus');
-      setSecondsLeft(DURATIONS.focus);
+      setSecondsLeft(durations.focus);
       setRunning(false);
     }
   }
 
   function reset() {
     setPhase('focus');
-    setSecondsLeft(DURATIONS.focus);
+    setSecondsLeft(durations.focus);
     setRunning(false);
   }
 
@@ -208,6 +249,45 @@ export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: Tim
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Durations */}
+        <div className="w-full">
+          <button
+            type="button"
+            onClick={() => setShowDurations((v) => !v)}
+            aria-expanded={showDurations}
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+          >
+            <span aria-hidden="true">{showDurations ? '▾' : '▸'}</span> Durations
+          </button>
+          {showDurations && (
+            <div className="mt-2">
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { label: 'Focus', value: editFocus, set: setEditFocus },
+                  { label: 'Short', value: editShort, set: setEditShort },
+                  { label: 'Long', value: editLong, set: setEditLong },
+                ] as const).map(({ label, value, set }) => (
+                  <label key={label} className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
+                    {label}
+                    <input
+                      type="number"
+                      min={1}
+                      max={120}
+                      value={value}
+                      onChange={(e) => set(clampMinutes(Number(e.target.value)))}
+                      className="rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 text-sm text-[var(--text)] tabular-nums outline-none focus-visible:border-ring"
+                    />
+                  </label>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" onClick={saveDurations} disabled={saving} className="mt-2 w-full">
+                {saving ? 'Saving…' : 'Save durations'}
+              </Button>
+              <p className="mt-1.5 text-[11px] text-[var(--text-muted)] text-center">Saving applies the new length to the current phase and pauses the timer.</p>
+            </div>
+          )}
         </div>
 
         <p className="text-xs text-[var(--text-muted)] text-center">
