@@ -10,7 +10,7 @@ vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
-const item: Item = { id: 'a', track: 'plan', sort_order: 1, title: 'Read Clean Architecture', metadata: { week: 2 } };
+const item: Item = { id: 'a', course_id: 'se-realworld', track: 'plan', sort_order: 1, title: 'Read Clean Architecture', metadata: { week: 2 } };
 
 describe('TaskRow', () => {
   it('renders the title and a checkbox', () => {

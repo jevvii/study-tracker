@@ -1,15 +1,18 @@
 'use client';
 import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { TaskRow } from './task-row';
 import { TopicRow } from './topic-row';
 import { ProjectCard } from './project-card';
 import { ResourceCard } from './resource-card';
 import { ItemDrawer } from './item-drawer';
+import { ItemForm } from '@/components/courses/item-form';
 import { EmptyState } from '@/components/empty-state';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProgressOptimistic } from '@/lib/hooks';
-import { toggleProgress } from '@/lib/data';
+import { toggleProgress, deleteItem } from '@/lib/data';
 import { shouldCelebrate } from '@/lib/progress';
 import { fireConfetti } from '@/components/confetti';
 import { cn } from '@/lib/utils';
@@ -37,12 +40,19 @@ export function TrackBrowser({
   items,
   progress,
   timeLogs,
+  courseId,
+  canEdit,
+  relatedItems,
 }: {
   track: Track;
   items: Item[];
   progress: Progress[];
   timeLogs: TimeLog[];
+  courseId: string;
+  canEdit: boolean;
+  relatedItems?: Item[];
 }) {
+  const router = useRouter();
   const { optimistic, toggle } = useProgressOptimistic(progress);
   const [, start] = useTransition();
   const [filter, setFilter] = useState<Filter>('all');
@@ -123,16 +133,47 @@ export function TrackBrowser({
 
   const renderItem = (item: Item) => {
     const status = statusOf(item.id);
-    if (track === 'plan') {
-      return <TaskRow key={item.id} item={item} status={status} onToggle={onToggle} onOpen={(it) => setSelectedId(it.id)} />;
-    }
-    if (track === 'topic') {
-      return <TopicRow key={item.id} item={item} status={status} onToggle={onToggle} />;
-    }
-    if (track === 'project') {
-      return <ProjectCard key={item.id} item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />;
-    }
-    return <ResourceCard key={item.id} item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />;
+    const row =
+      track === 'plan' ? <TaskRow item={item} status={status} onToggle={onToggle} onOpen={(it) => setSelectedId(it.id)} />
+        : track === 'topic' ? <TopicRow item={item} status={status} onToggle={onToggle} />
+          : track === 'project' ? <ProjectCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />
+            : <ResourceCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />;
+
+    if (!canEdit) return <div key={item.id}>{row}</div>;
+
+    return (
+      <div key={item.id} className="flex items-start gap-1.5">
+        <div className="min-w-0 flex-1">{row}</div>
+        <div className="flex shrink-0 items-center gap-1 pt-1">
+          <ItemForm
+            track={track}
+            courseId={courseId}
+            item={item}
+            trigger={
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                aria-label={`Edit ${item.title}`}
+              >
+                ✎
+              </button>
+            }
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              start(() => { void deleteItem(item.id).then(() => router.refresh()); });
+            }}
+            className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            aria-label={`Delete ${item.title}`}
+          >
+            🗑
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -154,6 +195,9 @@ export function TrackBrowser({
             </button>
           ))}
         </div>
+        {canEdit && (
+          <ItemForm track={track} courseId={courseId} trigger={<Button size="sm">+ Add</Button>} />
+        )}
         <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
           <SelectTrigger size="sm" className="w-40 ml-auto">
             <SelectValue />
@@ -214,6 +258,9 @@ export function TrackBrowser({
         timeLogs={timeLogs}
         open={selectedId !== null}
         onOpenChange={(v) => { if (!v) setSelectedId(null); }}
+        courseId={courseId}
+        canEdit={canEdit}
+        relatedItems={relatedItems}
       />
     </div>
   );

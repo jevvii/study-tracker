@@ -8,7 +8,7 @@ export default async function TopicsPage() {
   const counts = trackCounts(topic.items, topic.progress, 'topic');
   return (
     <TrackPage title="Topics" subtitle="The fifteen sections of the guide. Mark each as you study it — open a section to see its linked resources." backHref="/" counts={counts}>
-      <TopicsView items={topic.items} resources={resource.items} progress={topic.progress} timeLogs={topic.timeLogs} />
+      <TopicsView items={topic.items} resources={resource.items} progress={topic.progress} timeLogs={topic.timeLogs} courseId={topic.courseId} canEdit={topic.canEdit} />
     </TrackPage>
   );
 }

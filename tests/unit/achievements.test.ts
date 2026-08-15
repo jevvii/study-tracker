@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { computeUnlocked, ACHIEVEMENTS } from '@/lib/achievements';
 import type { Item, Progress, TimeLog, JournalEntry } from '@/lib/types';
 
-const plan: Item = { id: 'se-plan-w1-1', track: 'plan', sort_order: 1, title: 'P', metadata: { week: 1 } };
-const proj: Item = { id: 'se-proj-1', track: 'project', sort_order: 1, title: 'Pr', metadata: {} };
-const topic1: Item = { id: 'se-topic-1', track: 'topic', sort_order: 1, title: 'T1', metadata: { section: 1 } };
-const topic2: Item = { id: 'se-topic-2', track: 'topic', sort_order: 2, title: 'T2', metadata: { section: 2 } };
-const book: Item = { id: 'se-res-1', track: 'resource', sort_order: 1, title: 'B', metadata: { type: 'book', topics: ['se-topic-1'] } };
-const video = (n: number): Item => ({ id: `se-res-v${n}`, track: 'resource', sort_order: 10 + n, title: `V${n}`, metadata: { type: 'video', topics: ['se-topic-1'] } });
+const plan: Item = { id: 'se-plan-w1-1', course_id: 'se-realworld', track: 'plan', sort_order: 1, title: 'P', metadata: { week: 1 } };
+const proj: Item = { id: 'se-proj-1', course_id: 'se-realworld', track: 'project', sort_order: 1, title: 'Pr', metadata: {} };
+const topic1: Item = { id: 'se-topic-1', course_id: 'se-realworld', track: 'topic', sort_order: 1, title: 'T1', metadata: { section: 1 } };
+const topic2: Item = { id: 'se-topic-2', course_id: 'se-realworld', track: 'topic', sort_order: 2, title: 'T2', metadata: { section: 2 } };
+const book: Item = { id: 'se-res-1', course_id: 'se-realworld', track: 'resource', sort_order: 1, title: 'B', metadata: { type: 'book', topics: ['se-topic-1'] } };
+const video = (n: number): Item => ({ id: `se-res-v${n}`, course_id: 'se-realworld', track: 'resource', sort_order: 10 + n, title: `V${n}`, metadata: { type: 'video', topics: ['se-topic-1'] } });
 const videos = Array.from({ length: 10 }, (_, i) => video(i + 1));
 
 const items: Item[] = [plan, proj, topic1, topic2, book, ...videos];

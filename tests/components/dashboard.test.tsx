@@ -18,9 +18,9 @@ vi.mock('@/lib/data', () => ({
 }));
 
 const items = [
-  { id: 'a', track: 'plan', sort_order: 1, title: 'Wk1 focus', description: null, metadata: { week: 1, hours: 22 } },
-  { id: 'b', track: 'plan', sort_order: 2, title: 'Wk1 read', description: null, metadata: { week: 1, hours: 22 } },
-  { id: 'c', track: 'project', sort_order: 1, title: 'Draw Architecture', description: null, metadata: {} },
+  { id: 'a', course_id: 'se-realworld', track: 'plan', sort_order: 1, title: 'Wk1 focus', description: null, metadata: { week: 1, hours: 22 } },
+  { id: 'b', course_id: 'se-realworld', track: 'plan', sort_order: 2, title: 'Wk1 read', description: null, metadata: { week: 1, hours: 22 } },
+  { id: 'c', course_id: 'se-realworld', track: 'project', sort_order: 1, title: 'Draw Architecture', description: null, metadata: {} },
 ];
 const progress = [
   { user_id: 'u', item_id: 'a', status: 'done', completed_at: '2026-08-14', notes: null, updated_at: '' },

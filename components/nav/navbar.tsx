@@ -6,6 +6,8 @@ import { CommandMenu } from '@/components/command-menu';
 import { MotionToggle } from '@/components/motion-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CourseSwitcher } from '@/components/courses/course-switcher';
+import type { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,7 +16,7 @@ import { cn } from '@/lib/utils';
  * on hover (mirrors jevvii-portfolio's `.site-header` / `.nav-links`). The link
  * list is desktop-only (`lg`); phones and tablets use the BottomBar.
  */
-export function Navbar({ initials }: { initials: string }) {
+export function Navbar({ initials, active, enrolled }: { initials: string; active: Course; enrolled: Course[] }) {
   const pathname = usePathname();
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[var(--border)] bg-[var(--bg)]/60 backdrop-blur-xl">
@@ -48,6 +50,9 @@ export function Navbar({ initials }: { initials: string }) {
         </ul>
 
         <div className="flex items-center gap-1">
+          <div className="hidden sm:block">
+            <CourseSwitcher active={active} enrolled={enrolled} />
+          </div>
           <CommandMenu />
           <MotionToggle />
           <ThemeToggle />

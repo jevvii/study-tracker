@@ -7,7 +7,8 @@ function pct(done: number, total: number): number {
 }
 
 export function overallProgress(items: Item[], progress: Progress[]): Counts {
-  const done = progress.filter((p) => p.status === 'done').length;
+  const ids = new Set(items.map((i) => i.id));
+  const done = progress.filter((p) => p.status === 'done' && ids.has(p.item_id)).length;
   return { done, total: items.length, pct: pct(done, items.length) };
 }
 
@@ -121,6 +122,7 @@ export function weeklyReviewData(
   const start = isoWeekStart(today);
   const weekStart = start.toISOString().slice(0, 10);
   const lastStart = new Date(start.getTime() - 7 * 86400000);
+  const ids = new Set(items.map((i) => i.id));
 
   const inRange = (date: string, fromMs: number) => {
     const t = new Date(date + 'T00:00:00Z').getTime();
@@ -134,12 +136,14 @@ export function weeklyReviewData(
 
   const doneThisWeek = progress.filter((p) => {
     if (p.status !== 'done' || !p.completed_at) return false;
+    if (!ids.has(p.item_id)) return false;
     const t = new Date(p.completed_at).getTime();
     return t >= start.getTime() && t < start.getTime() + 7 * 86400000;
   }).map((p) => items.find((i) => i.id === p.item_id)).filter(Boolean) as Item[];
 
   const doneLastWeek = progress.filter((p) => {
     if (p.status !== 'done' || !p.completed_at) return false;
+    if (!ids.has(p.item_id)) return false;
     const t = new Date(p.completed_at).getTime();
     return t >= lastStart.getTime() && t < lastStart.getTime() + 7 * 86400000;
   }).length;

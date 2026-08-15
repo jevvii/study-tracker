@@ -9,8 +9,8 @@ vi.mock('framer-motion', () => ({ motion: { div: ({ children }: any) => <div>{ch
 vi.mock('@/lib/data', () => ({ toggleProgress: vi.fn().mockResolvedValue({ ok: true }) }));
 
 const items: Item[] = [
-  { id: 'a', track: 'topic', sort_order: 1, title: 'Architecture', metadata: { section: 1 } },
-  { id: 'b', track: 'topic', sort_order: 2, title: 'Docs', metadata: { section: 2 } },
+  { id: 'a', course_id: 'se-realworld', track: 'topic', sort_order: 1, title: 'Architecture', metadata: { section: 1 } },
+  { id: 'b', course_id: 'se-realworld', track: 'topic', sort_order: 2, title: 'Docs', metadata: { section: 2 } },
 ];
 const progress: Progress[] = [];
 

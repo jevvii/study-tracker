@@ -1,9 +1,13 @@
 'use client';
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { ItemForm } from '@/components/courses/item-form';
 import { toggleProgress, updateItemNotes } from '@/lib/data';
+import { topicsForResource, resourcesForProject } from '@/lib/relationships';
 import { cn } from '@/lib/utils';
 import type { Item, Progress, ProgressStatus, TimeLog } from '@/lib/types';
 
@@ -20,12 +24,18 @@ export function ItemDrawer({
   timeLogs,
   open,
   onOpenChange,
+  courseId,
+  canEdit,
+  relatedItems,
 }: {
   item: Item | null;
   progress?: Progress;
   timeLogs: TimeLog[];
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  courseId: string;
+  canEdit: boolean;
+  relatedItems?: Item[];
 }) {
   // Parent passes `key={item?.id ?? 'none'}` so state resets per item — no sync effect.
   const [status, setStatus] = useState<ProgressStatus>(progress?.status ?? 'not_started');
@@ -33,6 +43,15 @@ export function ItemDrawer({
   const [, start] = useTransition();
 
   if (!item) return null;
+
+  // Relationships to other tracks (resources ↔ topics ↔ projects), when the
+  // parent threads in related items from the other tracks on the same page.
+  const coveredTopics = item.track === 'resource' && relatedItems
+    ? topicsForResource(item, relatedItems)
+    : [];
+  const linkedResources = item.track === 'project' && relatedItems
+    ? resourcesForProject(item, relatedItems)
+    : [];
 
   const cycle = () => {
     const idx = STATUS_ORDER.indexOf(status);
@@ -56,6 +75,48 @@ export function ItemDrawer({
         <DialogDescription className="sr-only">Item details, status, and notes.</DialogDescription>
 
         {item.description && <p className="text-sm text-[var(--text-muted)]">{item.description}</p>}
+
+        {coveredTopics.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Covers these topics</p>
+            <ul className="flex flex-wrap gap-1.5">
+              {coveredTopics.map((t) => (
+                <li key={t.id}>
+                  <Link
+                    href={`/topics/${t.metadata.section ?? ''}`}
+                    className="inline-flex items-center rounded-full border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--accent)]/60"
+                  >
+                    {t.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {linkedResources.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Linked resources</p>
+            <ul className="space-y-1.5">
+              {linkedResources.map((r) => (
+                <li key={r.id} className="flex items-center gap-2 text-sm">
+                  <span className="min-w-0 truncate flex-1">{r.title}</span>
+                  {r.metadata.url && (
+                    <a
+                      href={r.metadata.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+                      aria-label={`Open ${r.title}`}
+                    >
+                      <ExternalLink className="size-4" />
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Status</p>
@@ -91,6 +152,14 @@ export function ItemDrawer({
 
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Close</Button>
+          {canEdit && (
+            <ItemForm
+              track={item.track}
+              courseId={courseId}
+              item={item}
+              trigger={<Button variant="outline">Edit</Button>}
+            />
+          )}
           <Button
             onClick={() => { setStatus('done'); start(() => { void toggleProgress(item.id, 'done'); }); }}
             disabled={status === 'done'}

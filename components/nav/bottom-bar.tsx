@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { MOBILE_PRIMARY, MOBILE_MORE, isActive } from './nav-config';
+import { CourseSwitcher } from '@/components/courses/course-switcher';
+import type { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-export function BottomBar() {
+export function BottomBar({ active, enrolled }: { active: Course; enrolled: Course[] }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -52,6 +54,9 @@ export function BottomBar() {
       <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
         <DialogContent className="lg:hidden fixed bottom-0 left-0 right-0 top-auto max-w-none translate-x-0 translate-y-0 rounded-b-none rounded-t-2xl sm:max-w-none p-4 pb-8">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--border)]" />
+          <div className="mb-3 flex justify-center">
+            <CourseSwitcher active={active} enrolled={enrolled} />
+          </div>
           <ul className="grid grid-cols-3 gap-2">
             {MOBILE_MORE.map((item) => (
               <li key={item.href}>

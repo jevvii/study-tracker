@@ -30,7 +30,7 @@ export function ResourceList({ items, progress }: { items: Item[]; progress: Pro
   );
 }
 
-export function ResourceRow({ item, progress }: { item: Item; progress?: Progress }) {
+export function ResourceRow({ item, progress, tags }: { item: Item; progress?: Progress; tags?: string[] }) {
   const done = progress?.status === 'done';
   const [pending, start] = useTransition();
   return (
@@ -40,7 +40,16 @@ export function ResourceRow({ item, progress }: { item: Item; progress?: Progres
         disabled={pending}
         onCheckedChange={() => start(() => { void toggleProgress(item.id, done ? 'not_started' : 'done'); })}
       />
-      <span className={`text-sm flex-1 ${done ? 'line-through text-[var(--text-muted)]' : ''}`}>{item.title}</span>
+      <div className="flex-1 min-w-0">
+        <span className={`text-sm ${done ? 'line-through text-[var(--text-muted)]' : ''}`}>{item.title}</span>
+        {tags && tags.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {tags.map((t) => (
+              <span key={t} className="text-[10px] uppercase tracking-wider rounded-full border border-[var(--border)] px-1.5 py-0.5 text-[var(--text-muted)]">{t}</span>
+            ))}
+          </div>
+        )}
+      </div>
       <span className="text-xs uppercase tracking-wider text-[var(--text-muted)]">{item.metadata.type}</span>
       {item.metadata.url && (
         <a href={item.metadata.url} target="_blank" rel="noreferrer" className="text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]" aria-label={`Open ${item.title}`}>

@@ -1,0 +1,562 @@
+[
+  {
+    "track": "resource",
+    "sort_order": 1,
+    "title": "AI Agent Authorization: Best Practices for Secure Agentic Systems - SecureFlag",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 2,
+    "title": "Addressing Technical Debt in Expansive Software Projects - Qt",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 3,
+    "title": "Advanced Indexing Strategies for Database Scalability - JusDB",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 4,
+    "title": "Application Security Testing: What it is & Why it Matters - SentinelOne",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 5,
+    "title": "Boost Query Performance with Database Indexing: Expert Strategies - Acceldata",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 6,
+    "title": "CI/CD Testing: Complete Guide to Continuous Testing (2026) | Keploy Blog",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 7,
+    "title": "Cache Invalidation: Strategies, Types and How It Works - Redisson PRO",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 8,
+    "title": "Cache-Aside, Write-Through, Write-Behind, Refresh-Ahead | Witty Coder",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 9,
+    "title": "Caching - System Design - Hello Interview",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 10,
+    "title": "Caching Strategies in System Design: 4 Patterns (2026) - Levelop",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 11,
+    "title": "Code Review Best Practices - The Complete Guide for Engineering Teams (2026)",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 12,
+    "title": "Code Reviews in Large-Scale Projects: Best Practices for Managers - Codacy | Blog",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 13,
+    "title": "Continuous Integration Testing: Types, Best Practices, and Tools - Harness",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 14,
+    "title": "Contract Testing vs End-to-End API Testing: A Decision Framework for Engineering Teams",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 15,
+    "title": "Contract Testing – what is it and why do you need it - Craig Risi",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 16,
+    "title": "Contract Testing: The Missing Link in Your Microservices Strategy? - Gravitee",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 17,
+    "title": "Database Indexing Strategies — B-Tree, Hash, GIN, Partial, and Covering Indexes - Codelit",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 18,
+    "title": "Database Indexing for Application Performance — PandaStack Blog",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 19,
+    "title": "GitFlow vs GitHub Flow vs Trunk-Based Development Guide - codewithmukesh",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 20,
+    "title": "GitHub - iHebaMohammed/EshopModularMonoliths: A modern Modular Monolith (Modulith) e-commerce application built with ASP.NET Core .NET 8 following clean architecture principles, Domain-Driven Design, CQRS, and Vertical Slice Architecture.",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 21,
+    "title": "GitOps Best Practices: A Complete Guide | 2026 Edition - Akuity",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 22,
+    "title": "Google Code Review Guidelines: The Internal Principles That Set the Industry Standard",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 23,
+    "title": "How to Choose GitFlow vs Trunk-Based in 7 Steps (2026) - GitKraken",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 24,
+    "title": "How to Design the Best Possible Architecture for a New App | Wondel.ai Skills",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 25,
+    "title": "How to Do Code Review: A Practical Guide for Developers",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 26,
+    "title": "How to Manage Technical Debt: Best Strategies - Artkai",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 27,
+    "title": "Index Architecture and Design Guide - SQL Server - Microsoft Learn",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 28,
+    "title": "Microservices, the Expulsion From E2E Testing Paradise, and the Path to Salvation: Contract Testing - Markus Oberlehner",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 29,
+    "title": "OWASP API Security Top 10 Overview and Best Practices | F5",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 30,
+    "title": "OWASP API Security Top 10: Cheat Sheet & Fixes (2026) - Zuplo",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 31,
+    "title": "OWASP Top 10 2025: What Changed & New Vulnerabilities - Parasoft",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 32,
+    "title": "Odoo 19 Security Best Practices: Complete Guide 2025 - Vraja Technologies",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 33,
+    "title": "PostgreSQL Indexing: Internals, Types, and Trade-offs - Abhimanyu Nagurkar",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 34,
+    "title": "Pyramid or Crab? Find a testing strategy that fits | Articles - web.dev",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 35,
+    "title": "SQL Indexes Guide: B-Tree, Composite, Covering, Partial, GIN",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 36,
+    "title": "SRE Consulting & Site Reliability Engineering - SquareOps",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 37,
+    "title": "Software Architecture Roadmap: From Beginner to Architect - VickyBytes",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 38,
+    "title": "Software Quality Gates: What They Are & Why They Matter - testRigor AI-Based Automated Testing Tool",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 39,
+    "title": "Software requirement document template: free SRS steps [2026] - Asana",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 40,
+    "title": "Starting for Small team (15–20 engineers) looking for a Slack native oncall / incident tool : r/sre - Reddit",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 41,
+    "title": "Static Code Analysis Best Practices for Enterprise Teams",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 42,
+    "title": "Technical Debt Management: The Definitive OKR Playbook",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 43,
+    "title": "Test Pyramid vs Testing Trophy- What's the Difference? - Baytech Consulting",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 44,
+    "title": "Testing Pyramid Explained: A Practical Guide for QA Teams - Drizz",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 45,
+    "title": "The 2026 AI agent auth checklist: 9 things to audit before you ship - WorkOS",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 46,
+    "title": "The testing pyramid: Strategic software testing for Agile teams - CircleCI",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 47,
+    "title": "Top 10 OWASP API Security in 2026 - Akto",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 48,
+    "title": "Trunk-Based Development vs. Gitflow: Choosing the Right Branching Strategy - Flagsmith",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 49,
+    "title": "What Is a Pull Request? The Complete Guide for Engineering Teams - Coderbuds Blog",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 50,
+    "title": "https://acharyaks90.medium.com/how-to-analyse-code-code-analyzer-101-static-dynamic-security-quality-gates-ee29608d2049",
+    "metadata": {
+      "type": "article",
+      "url": "https://acharyaks90.medium.com/how-to-analyse-code-code-analyzer-101-static-dynamic-security-quality-gates-ee29608d2049",
+      "source_url": "https://acharyaks90.medium.com/how-to-analyse-code-code-analyzer-101-static-dynamic-security-quality-gates-ee29608d2049"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 51,
+    "title": "https://medium.com/@abdooy640/database-indexing-types-when-to-use-them-and-when-not-to-02198cd58fa6",
+    "metadata": {
+      "type": "article",
+      "url": "https://medium.com/@abdooy640/database-indexing-types-when-to-use-them-and-when-not-to-02198cd58fa6",
+      "source_url": "https://medium.com/@abdooy640/database-indexing-types-when-to-use-them-and-when-not-to-02198cd58fa6"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 52,
+    "title": "https://medium.com/@jasminfluri/expand-and-contract-method-for-database-changes-414d236f236f",
+    "metadata": {
+      "type": "article",
+      "url": "https://medium.com/@jasminfluri/expand-and-contract-method-for-database-changes-414d236f236f",
+      "source_url": "https://medium.com/@jasminfluri/expand-and-contract-method-for-database-changes-414d236f236f"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 53,
+    "title": "https://medium.com/@patibandha/gitflow-vs-github-flow-vs-trunk-based-development-dded3c8c7af1",
+    "metadata": {
+      "type": "article",
+      "url": "https://medium.com/@patibandha/gitflow-vs-github-flow-vs-trunk-based-development-dded3c8c7af1",
+      "source_url": "https://medium.com/@patibandha/gitflow-vs-github-flow-vs-trunk-based-development-dded3c8c7af1"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 54,
+    "title": "https://medium.com/@sdesantos/techietuesday-mastering-pull-requests-a-brief-look-at-googles-engineering-practices-ba808d17e3bf",
+    "metadata": {
+      "type": "article",
+      "url": "https://medium.com/@sdesantos/techietuesday-mastering-pull-requests-a-brief-look-at-googles-engineering-practices-ba808d17e3bf",
+      "source_url": "https://medium.com/@sdesantos/techietuesday-mastering-pull-requests-a-brief-look-at-googles-engineering-practices-ba808d17e3bf"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 55,
+    "title": "https://medium.com/developersglobal/sre-at-a-startup-vs-big-tech-what-actually-changes-cd496f90d905",
+    "metadata": {
+      "type": "article",
+      "url": "https://medium.com/developersglobal/sre-at-a-startup-vs-big-tech-what-actually-changes-cd496f90d905",
+      "source_url": "https://medium.com/developersglobal/sre-at-a-startup-vs-big-tech-what-actually-changes-cd496f90d905"
+    }
+  },
+  {
+    "track": "resource",
+    "sort_order": 56,
+    "title": "is that ok to run ERPnext on my server? : r/frappe_framework - Reddit",
+    "metadata": {
+      "type": "article",
+      "url": null,
+      "source_url": null
+    }
+  }
+]

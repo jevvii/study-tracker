@@ -3,8 +3,8 @@ import { weeklyReviewData, dailyBreakdown, streakMicroCopy, greeting, currentIso
 import type { Item, Progress, TimeLog, JournalEntry } from '@/lib/types';
 
 const items: Item[] = [
-  { id: 'a', track: 'plan', sort_order: 1, title: 'Task A', metadata: { week: 1 } },
-  { id: 'b', track: 'topic', sort_order: 1, title: 'Topic B', metadata: { section: 1 } },
+  { id: 'a', course_id: 'se-realworld', track: 'plan', sort_order: 1, title: 'Task A', metadata: { week: 1 } },
+  { id: 'b', course_id: 'se-realworld', track: 'topic', sort_order: 1, title: 'Topic B', metadata: { section: 1 } },
 ];
 // 2026-08-15 is a Saturday; ISO week starts Monday 2026-08-10.
 const today = new Date('2026-08-15T12:00:00Z');

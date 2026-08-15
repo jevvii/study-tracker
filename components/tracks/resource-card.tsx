@@ -69,6 +69,18 @@ export function ResourceCard({
           <ExternalLink className="size-4" />
         </a>
       )}
+      {item.metadata.source_url && (
+        <a
+          href={item.metadata.source_url}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-[var(--text-muted)] hover:text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+          aria-label={`NotebookLM source for ${item.title}`}
+          title="NotebookLM source"
+        >
+          <ExternalLink className="size-4" />
+        </a>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Build', href: '/projects', emoji: '🔨', section: 'core' },
   { label: 'Learn', href: '/topics', emoji: '📚', section: 'core' },
   { label: 'Refs', href: '/resources', emoji: '📦', section: 'core' },
+  { label: 'Courses', href: '/courses', emoji: '🎓', section: 'core' },
   { label: 'Focus', href: '/focus', emoji: '🎯', section: 'new' },
   { label: 'Journal', href: '/journal', emoji: '📓', section: 'new' },
   { label: 'Wins', href: '/achievements', emoji: '🏆', section: 'new' },
@@ -25,16 +26,17 @@ export const NAV_ITEMS: NavItem[] = [
 export const MOBILE_PRIMARY: NavItem[] = [
   NAV_ITEMS[0], // Home
   NAV_ITEMS[1], // Plan
-  NAV_ITEMS[5], // Focus
-  NAV_ITEMS[6], // Journal
+  NAV_ITEMS[6], // Focus
+  NAV_ITEMS[7], // Journal
 ];
 
 export const MOBILE_MORE: NavItem[] = [
   NAV_ITEMS[2], // Build
   NAV_ITEMS[3], // Learn
   NAV_ITEMS[4], // Refs
-  NAV_ITEMS[7], // Wins
-  NAV_ITEMS[8], // You
+  NAV_ITEMS[5], // Courses
+  NAV_ITEMS[8], // Wins
+  NAV_ITEMS[9], // You
 ];
 
 export const NAV_SECTIONS: { id: NavSection; label: string }[] = [

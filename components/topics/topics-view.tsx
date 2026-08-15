@@ -12,11 +12,15 @@ export function TopicsView({
   resources,
   progress,
   timeLogs,
+  courseId,
+  canEdit,
 }: {
   items: Item[];
   resources: Item[];
   progress: Progress[];
   timeLogs: TimeLog[];
+  courseId: string;
+  canEdit: boolean;
 }) {
   const [view, setView] = useState<View>('list');
 
@@ -41,7 +45,7 @@ export function TopicsView({
       </div>
 
       {view === 'list' ? (
-        <TrackBrowser track="topic" items={items} progress={progress} timeLogs={timeLogs} />
+        <TrackBrowser track="topic" items={items} progress={progress} timeLogs={timeLogs} courseId={courseId} canEdit={canEdit} />
       ) : (
         <KnowledgeMap topics={items} resources={resources} progress={progress} />
       )}

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber } from '@/lib/progress';
+import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber, weeklyReviewData } from '@/lib/progress';
 import type { Item, Progress, Streak, TimeLog } from '@/lib/types';
 
 const items: Item[] = [
-  { id: 'a', track: 'plan', sort_order: 1, title: 'A', metadata: { week: 1, hours: 22 } },
-  { id: 'b', track: 'plan', sort_order: 2, title: 'B', metadata: { week: 1, hours: 22 } },
-  { id: 'c', track: 'project', sort_order: 1, title: 'C', metadata: {} },
+  { id: 'a', course_id: 'se-realworld', track: 'plan', sort_order: 1, title: 'A', metadata: { week: 1, hours: 22 } },
+  { id: 'b', course_id: 'se-realworld', track: 'plan', sort_order: 2, title: 'B', metadata: { week: 1, hours: 22 } },
+  { id: 'c', course_id: 'se-realworld', track: 'project', sort_order: 1, title: 'C', metadata: {} },
 ];
 const progress: Progress[] = [
   { user_id: 'u', item_id: 'a', status: 'done', completed_at: '2026-08-14', notes: null, updated_at: '' },
@@ -19,6 +19,17 @@ describe('overallProgress', () => {
   });
   it('handles empty progress', () => {
     expect(overallProgress(items, [])).toEqual({ done: 0, total: 3, pct: 0 });
+  });
+  it('counts only the done entries whose item_id is in the passed items (no cross-course leakage)', () => {
+    const itemsA: Item[] = [{ id: 'a1', course_id: 'A', track: 'plan', sort_order: 1, title: 'A1', metadata: {} }];
+    const itemsB: Item[] = [{ id: 'b1', course_id: 'B', track: 'plan', sort_order: 1, title: 'B1', metadata: {} }];
+    const progressWithB1Done: Progress[] = [
+      { user_id: 'u', item_id: 'b1', status: 'done', completed_at: null, notes: null, updated_at: '' },
+    ];
+    // b1's done entry is NOT for any item in itemsA → 0/1.
+    expect(overallProgress(itemsA, progressWithB1Done)).toEqual({ done: 0, total: 1, pct: 0 });
+    // b1's done entry IS for the item in itemsB → 1/1.
+    expect(overallProgress(itemsB, progressWithB1Done)).toEqual({ done: 1, total: 1, pct: 100 });
   });
 });
 
@@ -76,5 +87,44 @@ describe('currentWeekNumber', () => {
       { user_id: 'u', item_id: 'a', status: 'done', completed_at: 'x', notes: null, updated_at: '' },
     ];
     expect(currentWeekNumber(items, done)).toBe(1); // week 1 still has 'b' incomplete
+  });
+});
+
+describe('weeklyReviewData', () => {
+  it('itemsDoneLastWeek counts only done entries for items in the passed items (no cross-course leakage)', () => {
+    // Week of Mon 2026-08-10..Sun 2026-08-16; previous week 2026-08-03..2026-08-09.
+    const today = new Date('2026-08-15T00:00:00Z');
+    const itemsA: Item[] = [{ id: 'a1', course_id: 'A', track: 'plan', sort_order: 1, title: 'A1', metadata: {} }];
+    const progress: Progress[] = [
+      // b1 (a different course's item) was completed last week — must NOT count toward itemsA's review.
+      { user_id: 'u', item_id: 'b1', status: 'done', completed_at: '2026-08-06T12:00:00Z', notes: null, updated_at: '' },
+    ];
+    const r = weeklyReviewData(itemsA, progress, [], [], today);
+    expect(r.itemsDoneLastWeek).toBe(0);
+    // And confirm a matching item DOES count.
+    const progressA: Progress[] = [
+      { user_id: 'u', item_id: 'a1', status: 'done', completed_at: '2026-08-06T12:00:00Z', notes: null, updated_at: '' },
+    ];
+    const r2 = weeklyReviewData(itemsA, progressA, [], [], today);
+    expect(r2.itemsDoneLastWeek).toBe(1);
+  });
+
+  it('itemsDone counts only done entries for items in the passed items (no cross-course leakage)', () => {
+    // Week of Mon 2026-08-10..Sun 2026-08-16 (today is Sat 2026-08-15).
+    const today = new Date('2026-08-15T00:00:00Z');
+    const itemsA: Item[] = [{ id: 'a1', course_id: 'A', track: 'plan', sort_order: 1, title: 'A1', metadata: {} }];
+    const progress: Progress[] = [
+      // b1 (a different course's item) was completed THIS week — must NOT appear in itemsA's review.
+      { user_id: 'u', item_id: 'b1', status: 'done', completed_at: '2026-08-12T12:00:00Z', notes: null, updated_at: '' },
+    ];
+    const r = weeklyReviewData(itemsA, progress, [], [], today);
+    expect(r.itemsDone).toEqual([]);
+    // And confirm a matching item DOES appear.
+    const progressA: Progress[] = [
+      { user_id: 'u', item_id: 'a1', status: 'done', completed_at: '2026-08-12T12:00:00Z', notes: null, updated_at: '' },
+    ];
+    const r2 = weeklyReviewData(itemsA, progressA, [], [], today);
+    expect(r2.itemsDone).toHaveLength(1);
+    expect(r2.itemsDone[0].id).toBe('a1');
   });
 });
