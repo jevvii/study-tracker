@@ -65,6 +65,9 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   const total = durations[phase];
   const elapsed = total - secondsLeft;
   const ringColor = phase === 'focus' ? 'var(--accent)' : 'var(--warning)';
+  // While a focus session is running, the task attribution is locked so the
+  // session logs to the task it was started with (no mid-session re-attribution).
+  const focusRunning = running && phase === 'focus';
 
   // Tick down once per second while running.
   useEffect(() => {
@@ -233,7 +236,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
         {/* Task attribution */}
         <div className="w-full">
           <label htmlFor="focus-task" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5 block">Logging time To</label>
-          <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')}>
+          <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')} disabled={focusRunning}>
             <SelectTrigger id="focus-task" className="w-full">
               <SelectValue placeholder="No specific task">
                 {(value: string | null) => {
@@ -249,6 +252,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
               ))}
             </SelectContent>
           </Select>
+          {focusRunning && <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">Locked until this focus session ends.</p>}
         </div>
 
         {/* Durations */}
@@ -257,7 +261,8 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
             type="button"
             onClick={() => setShowDurations((v) => !v)}
             aria-expanded={showDurations}
-            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+            disabled={focusRunning}
+            className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span aria-hidden="true">{showDurations ? '▾' : '▸'}</span> Durations
           </button>
@@ -276,13 +281,14 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
                       min={1}
                       max={120}
                       value={value}
+                      disabled={focusRunning}
                       onChange={(e) => set(clampMinutes(Number(e.target.value)))}
-                      className="rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 text-sm text-[var(--text)] tabular-nums outline-none focus-visible:border-ring"
+                      className="rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 text-sm text-[var(--text)] tabular-nums outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </label>
                 ))}
               </div>
-              <Button variant="outline" size="sm" onClick={saveDurations} disabled={saving} className="mt-2 w-full">
+              <Button variant="outline" size="sm" onClick={saveDurations} disabled={saving || focusRunning} className="mt-2 w-full">
                 {saving ? 'Saving…' : 'Save durations'}
               </Button>
               <p className="mt-1.5 text-[11px] text-[var(--text-muted)] text-center">Saving applies the new length to the current phase and pauses the timer.</p>
