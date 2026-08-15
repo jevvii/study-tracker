@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Navbar } from '@/components/nav/navbar';
 import { BottomBar } from '@/components/nav/bottom-bar';
+import { QuickLogFAB } from '@/components/fab/quick-log-fab';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -14,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <Navbar initials={initials} />
       <main className="min-w-0 px-4 py-6 pb-24 lg:pb-8">{children}</main>
       <BottomBar />
+      <QuickLogFAB />
     </div>
   );
 }

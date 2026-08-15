@@ -193,7 +193,14 @@ export function FocusTimer({ items, todayLogs }: { items: Item[]; todayLogs: Tim
         <div className="w-full">
           <label htmlFor="focus-task" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5 block">Logging time To</label>
           <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')}>
-            <SelectTrigger id="focus-task" className="w-full"><SelectValue placeholder="No specific task" /></SelectTrigger>
+            <SelectTrigger id="focus-task" className="w-full">
+              <SelectValue placeholder="No specific task">
+                {(value: string | null) => {
+                  if (!value) return 'No specific task';
+                  return items.find((i) => i.id === value)?.title ?? value;
+                }}
+              </SelectValue>
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="">No specific task</SelectItem>
               {items.map((i) => (
