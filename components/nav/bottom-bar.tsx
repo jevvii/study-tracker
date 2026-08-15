@@ -14,7 +14,7 @@ export function BottomBar() {
     <>
       <nav
         aria-label="Primary mobile"
-        className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/85 backdrop-blur-xl"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/85 backdrop-blur-xl"
       >
         <div className="grid grid-cols-5 h-14">
           {MOBILE_PRIMARY.map((item) => {
@@ -50,7 +50,7 @@ export function BottomBar() {
       </nav>
 
       <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
-        <DialogContent className="sm:hidden fixed bottom-0 left-0 right-0 top-auto max-w-none translate-x-0 translate-y-0 rounded-b-none rounded-t-2xl sm:max-w-none p-4 pb-8">
+        <DialogContent className="lg:hidden fixed bottom-0 left-0 right-0 top-auto max-w-none translate-x-0 translate-y-0 rounded-b-none rounded-t-2xl sm:max-w-none p-4 pb-8">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--border)]" />
           <ul className="grid grid-cols-3 gap-2">
             {MOBILE_MORE.map((item) => (
