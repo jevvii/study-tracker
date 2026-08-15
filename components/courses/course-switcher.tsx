@@ -2,7 +2,7 @@
 import { useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { setActiveCourse } from '@/lib/data';
 import type { Course } from '@/lib/types';
 
@@ -14,9 +14,12 @@ export function CourseSwitcher({ active, enrolled }: { active: Course; enrolled:
       value={active.id}
       onValueChange={(id) => { if (id) start(() => { void setActiveCourse(id).then(() => router.refresh()); }); }}
     >
-      <SelectTrigger size="sm" className="w-[10rem] gap-1.5" aria-label="Active course">
-        <span aria-hidden="true">{active.emoji}</span>
-        <SelectValue />
+      {/* Render the active title directly: Base UI's SelectValue can't resolve the
+          item label until the portaled SelectContent mounts (i.e. the dropdown is
+          opened once), so it would otherwise flash the raw course id. */}
+      <SelectTrigger size="sm" className="w-[12rem] gap-1.5" aria-label="Active course">
+        <span aria-hidden="true" className="shrink-0">{active.emoji}</span>
+        <span className="truncate flex-1 text-left">{active.title}</span>
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>

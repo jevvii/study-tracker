@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TaskRow } from './task-row';
 import { TopicRow } from './topic-row';
@@ -20,6 +21,7 @@ import type { Item, Progress, ProgressStatus, TimeLog, Track } from '@/lib/types
 
 type Filter = 'all' | 'not_started' | 'in_progress' | 'done';
 type Sort = 'default' | 'name' | 'recent';
+type Group = { key: string; title: string; href?: string; items: Item[] };
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -59,6 +61,13 @@ export function TrackBrowser({
   const [sort, setSort] = useState<Sort>('default');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Resources-only: filter/group by the topic each resource covers.
+  // `relatedItems` carries the topic items on the resources page.
+  const resourceTopics = track === 'resource' && relatedItems
+    ? [...relatedItems].sort((a, b) => (a.metadata.section ?? 0) - (b.metadata.section ?? 0))
+    : [];
+  const [topicFilter, setTopicFilter] = useState<string>('');
+  const [groupByTopic, setGroupByTopic] = useState(false);
 
   const statusOf = (id: string) => optimistic.find((p) => p.item_id === id)?.status ?? 'not_started';
   const inScope = (id: string) => items.some((i) => i.id === id);
@@ -80,6 +89,8 @@ export function TrackBrowser({
     let list = items.filter((i) => {
       if (filter !== 'all' && statusOf(i.id) !== filter) return false;
       if (q && !(`${i.title} ${i.description ?? ''}`.toLowerCase().includes(q))) return false;
+      // Resources: narrow to one topic when a topic filter is chosen.
+      if (track === 'resource' && topicFilter && !(i.metadata.topics ?? []).includes(topicFilter)) return false;
       return true;
     });
     list = [...list];
@@ -95,9 +106,9 @@ export function TrackBrowser({
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, filter, sort, query, optimistic]);
+  }, [items, filter, sort, query, optimistic, track, topicFilter]);
 
-  const groups = useMemo(() => {
+  const groups = useMemo<Group[]>(() => {
     if (track === 'plan') {
       const byWeek = new Map<number, Item[]>();
       for (const i of filtered) {
@@ -124,8 +135,26 @@ export function TrackBrowser({
         items: list,
       }));
     }
+    // Resources grouped by the topics they cover (many-to-many: a resource
+    // appears under every topic it covers). Resources with no topic links
+    // fall into an "Uncategorized" group.
+    if (track === 'resource' && groupByTopic && resourceTopics.length > 0) {
+      const out: { key: string; title: string; href?: string; items: Item[] }[] = [];
+      for (const t of resourceTopics) {
+        const rs = filtered.filter((r) => (r.metadata.topics ?? []).includes(t.id));
+        if (rs.length > 0) out.push({
+          key: t.id,
+          title: `§${t.metadata.section ?? ''} ${t.title}`,
+          href: `/topics/${t.metadata.section ?? ''}`,
+          items: rs,
+        });
+      }
+      const uncategorized = filtered.filter((r) => (r.metadata.topics ?? []).length === 0);
+      if (uncategorized.length > 0) out.push({ key: 'uncategorized', title: 'Uncategorized', items: uncategorized });
+      return out;
+    }
     return [{ key: 'all', title: '', items: filtered }];
-  }, [filtered, track]);
+  }, [filtered, track, groupByTopic, resourceTopics]);
 
   const selectedItem = items.find((i) => i.id === selectedId) ?? null;
   const selectedProgress = optimistic.find((p) => p.item_id === selectedId);
@@ -198,6 +227,35 @@ export function TrackBrowser({
         {canEdit && (
           <ItemForm track={track} courseId={courseId} trigger={<Button size="sm">+ Add</Button>} />
         )}
+        {track === 'resource' && resourceTopics.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setGroupByTopic((v) => !v)}
+              aria-pressed={groupByTopic}
+              className={cn(
+                'px-3 py-1 text-xs rounded-full border transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]',
+                groupByTopic ? 'bg-[var(--accent)] text-[var(--accent-contrast)] border-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]',
+              )}
+            >
+              Group by topic
+            </button>
+            <Select value={topicFilter} onValueChange={(v) => setTopicFilter(v ?? '')}>
+              <SelectTrigger size="sm" className="w-48 gap-1.5" aria-label="Filter by topic">
+                <span className="truncate flex-1 text-left">
+                  {topicFilter ? (resourceTopics.find((t) => t.id === topicFilter)?.title ?? 'Topic') : 'All topics'}
+                </span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All topics</SelectItem>
+                {resourceTopics.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
         <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
           <SelectTrigger size="sm" className="w-40 ml-auto">
             <SelectValue />
@@ -237,6 +295,12 @@ export function TrackBrowser({
                     </summary>
                     <div className="divide-y divide-[var(--border)]">{g.items.map(renderItem)}</div>
                   </details>
+                ) : g.href ? (
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+                    <Link href={g.href} className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] hover:text-[var(--text)]">
+                      {g.title}
+                    </Link>
+                  </h2>
                 ) : (
                   <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">{g.title}</h2>
                 )

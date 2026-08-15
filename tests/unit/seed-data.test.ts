@@ -35,6 +35,16 @@ describe('seed data', () => {
       }
     }
   });
+  it('every resource is categorized into at least one topic', () => {
+    for (const r of SEED_ITEMS.filter(i => i.track === 'resource')) {
+      expect(r.metadata.topics, `${r.id} has no topic categorization`).toBeDefined();
+      expect(r.metadata.topics!.length).toBeGreaterThan(0);
+    }
+  });
+  it('at least 15 resources carry a subtopic mapping', () => {
+    const withSubs = SEED_ITEMS.filter(i => i.track === 'resource' && (i.metadata.subtopics?.length ?? 0) > 0);
+    expect(withSubs.length).toBeGreaterThanOrEqual(15);
+  });
   it('every project is tagged with at least one topic', () => {
     const topicIds = new Set(SEED_ITEMS.filter(i => i.track === 'topic').map(i => i.id));
     for (const p of SEED_ITEMS.filter(i => i.track === 'project')) {
