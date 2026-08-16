@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { GlassCard } from './glass-card';
 import { ProgressRing } from '@/components/progress-ring';
-import { buttonVariants } from '@/components/ui/button';
+import { FocusCta } from '@/components/dashboard/focus-cta';
 
 export function HeroZone({
   week,
@@ -31,7 +30,7 @@ export function HeroZone({
           )}
         </h1>
         <div className="mt-4">
-          <Link href="/focus" className={buttonVariants()}>Start Focus ▶</Link>
+          <FocusCta />
         </div>
       </div>
       <div className="shrink-0 grid place-items-center">
