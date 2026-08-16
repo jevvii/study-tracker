@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GlassCard } from '@/components/dashboard/glass-card';
 import { FOCUS_STORAGE_KEY, publishFocus, readFocusSnapshot, type FocusSnapshot, type Phase } from '@/lib/focus-session';
 import { playFocusChime } from '@/lib/focus-audio';
+import { manilaDateKey } from '@/lib/time';
 import type { Item, Settings, TimeLog } from '@/lib/types';
 
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
@@ -234,7 +235,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   const logFocus = (secs: number) => {
     const minutes = Math.max(1, Math.round(secs / 60));
     if (minutes <= 0) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = manilaDateKey();
     start(() => { void logTime(minutes, today, itemId || undefined); });
   };
 

@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { weeklyReviewData, dayLabel } from '@/lib/progress';
-import { createJournalEntry } from '@/lib/data';
+import { saveWeeklyReview } from '@/lib/data';
+import { manilaWeekKey } from '@/lib/time';
 import { MOOD_EMOJI } from '@/lib/achievements';
 import type { Mood } from '@/lib/types';
 import type { Item, JournalEntry, Progress, TimeLog } from '@/lib/types';
@@ -40,7 +41,9 @@ export function WeeklyReviewModal({
     const body = reflection.trim();
     onOpenChange(false);
     if (!body) return;
-    start(() => { void createJournalEntry(body, 3, null); });
+    // Persist the reflection for the current Manila week (shared with the Journal's
+    // accumulated Weekly Reviews section).
+    start(() => { void saveWeeklyReview(manilaWeekKey(new Date()), body); });
   };
 
   return (

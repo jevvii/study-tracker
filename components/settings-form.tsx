@@ -2,7 +2,7 @@
 'use client';
 import { useTransition, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateSettings, exportUserData, resetUserData } from '@/lib/data';
+import { updateSettings, exportUserData, resetUserData, restartCurriculum } from '@/lib/data';
 import { createClient } from '@/lib/supabase/browser';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -46,6 +46,8 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
   const [resetOpen, setResetOpen] = useState(false);
   const [resetting, startReset] = useTransition();
   const [exporting, startExport] = useTransition();
+  const [restartOpen, setRestartOpen] = useState(false);
+  const [restarting, startRestart] = useTransition();
   const router = useRouter();
 
   const weeklyDirty = weekly !== savedWeekly;
@@ -104,6 +106,12 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
     router.refresh();
   });
 
+  const doRestart = () => startRestart(async () => {
+    await restartCurriculum();
+    setRestartOpen(false);
+    router.refresh();
+  });
+
   const signOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -151,11 +159,26 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
         </Row>
       </Section>
 
-      <Section title="Data" hint="Export a backup or start fresh.">
+      <Section title="Data" hint="Export a backup, restart the curriculum, or start fresh.">
         <Row label="Export" hint="Download all your data as JSON.">
           <Button variant="outline" size="sm" onClick={doExport} disabled={exporting}>
             {exporting ? 'Preparing…' : 'Export'}
           </Button>
+        </Row>
+        <Row label="Restart curriculum" hint="Back to week 1: clears progress, logged time, and wins for this course. Keeps your journal.">
+          <Dialog open={restartOpen} onOpenChange={setRestartOpen}>
+            <DialogTrigger render={<Button variant="outline" size="sm">Restart</Button>} />
+            <DialogContent className="sm:max-w-sm">
+              <DialogTitle>Restart curriculum to week 1?</DialogTitle>
+              <DialogDescription>This clears your completion progress, logged study time, and unlocked wins for the active course, and resets your streak — so the plan restarts at week 1 and your weekly review reflects only real use going forward. Your journal entries and settings are kept. This cannot be undone.</DialogDescription>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={() => setRestartOpen(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={doRestart} disabled={restarting}>
+                  {restarting ? 'Restarting…' : 'Restart to week 1'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </Row>
         <Row label="Reset" hint="Clear progress, logs, journal, and wins.">
           <Dialog open={resetOpen} onOpenChange={setResetOpen}>

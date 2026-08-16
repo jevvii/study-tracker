@@ -42,6 +42,11 @@ export interface JournalEntry {
   id: string; user_id: string; date: string; body: string; mood: Mood | null; item_id: string | null; created_at: string;
 }
 
+/** A persisted weekly-review reflection — one per user per Manila week. */
+export interface WeeklyReview {
+  user_id: string; week_start: string; reflection: string; updated_at: string;
+}
+
 export interface Achievement {
   id: string; title: string; description: string; icon: string; category: AchievementCategory;
 }

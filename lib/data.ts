@@ -1,12 +1,13 @@
 'use server';
 import { createClient } from '@/lib/supabase/server';
 import { nextStreak } from '@/lib/progress';
+import { manilaDateKey } from '@/lib/time';
 import { revalidatePath } from 'next/cache';
 import { ACHIEVEMENTS, computeUnlocked } from '@/lib/achievements';
 import { pickFallbackCourse } from '@/lib/course-scoping';
 import { parseImportJson } from '@/lib/course-import';
 import type { ImportError } from '@/lib/course-import';
-import type { Achievement, Course, ItemInput, JournalEntry, Mood, ProgressStatus, Settings, TimeLog, Track, UserCourse } from '@/lib/types';
+import type { Achievement, Course, ItemInput, JournalEntry, Mood, Progress, ProgressStatus, Settings, TimeLog, Track, UserCourse, WeeklyReview } from '@/lib/types';
 
 const SEED_COURSE_ID = 'se-realworld';
 
@@ -131,7 +132,7 @@ export async function updateItemNotes(itemId: string, notes: string) {
 }
 
 async function bumpStreak(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = manilaDateKey();
   const { data } = await supabase.from('streaks').select('*').eq('user_id', userId).single();
   if (!data) return;
   const updated = nextStreak(data, today);
@@ -169,11 +170,31 @@ export async function updateSettings(patch: Partial<Pick<Settings, 'theme' | 're
 // ---------------------------------------------------------------------------
 export async function getJournalPageData() {
   const { supabase, userId, courseId } = await activeCourse();
-  const [entries, items] = await Promise.all([
+  const [entries, items, progress, timeLogs, weeklyReviews] = await Promise.all([
     supabase.from('journal_entries').select('*').eq('user_id', userId).order('date', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('items').select('*').eq('course_id', courseId),
+    supabase.from('progress').select('*').eq('user_id', userId),
+    supabase.from('time_logs').select('*').eq('user_id', userId),
+    supabase.from('weekly_reviews').select('*').eq('user_id', userId),
   ]);
-  return { entries: (entries.data ?? []) as JournalEntry[], items: items.data ?? [] };
+  return {
+    entries: (entries.data ?? []) as JournalEntry[],
+    items: items.data ?? [],
+    progress: (progress.data ?? []) as Progress[],
+    timeLogs: (timeLogs.data ?? []) as TimeLog[],
+    weeklyReviews: (weeklyReviews.data ?? []) as WeeklyReview[],
+  };
+}
+
+// Upsert a weekly-review reflection for a given Manila week (week_start = the Monday
+// date key). Stats are derived on read; only the reflection is stored.
+export async function saveWeeklyReview(weekStart: string, reflection: string) {
+  const { supabase, userId } = await uid();
+  const { error } = await supabase.from('weekly_reviews')
+    .upsert({ user_id: userId, week_start: weekStart, reflection, updated_at: new Date().toISOString() }, { onConflict: 'user_id,week_start' });
+  if (error) throw error;
+  revalidateAll();
+  return { ok: true as const };
 }
 
 export async function createJournalEntry(body: string, mood: Mood | null, itemId?: string | null) {
@@ -282,7 +303,7 @@ export async function getFocusPageData() {
     supabase.from('time_logs').select('*').eq('user_id', userId),
     supabase.from('settings').select('*').eq('user_id', userId).maybeSingle(),
   ]);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = manilaDateKey();
   const todayLogs = ((logs.data ?? []) as TimeLog[]).filter((l) => l.date === today);
   return { items: items.data ?? [], progress: progress.data ?? [], todayLogs, settings: (settings.data as Settings | null) ?? null };
 }
@@ -325,6 +346,31 @@ export async function resetUserData() {
     supabase.from('progress').delete().eq('user_id', userId),
     supabase.from('time_logs').delete().eq('user_id', userId),
     supabase.from('journal_entries').delete().eq('user_id', userId),
+    supabase.from('user_achievements').delete().eq('user_id', userId),
+  ]);
+  await supabase.from('streaks').update({
+    current_streak: 0, longest_streak: 0, last_active_date: null,
+  }).eq('user_id', userId);
+  revalidateAll();
+  return { ok: true as const };
+}
+
+// Restart the active course's curriculum back to week 1: clear completion state and
+// logged study time for the active course (plus general no-task focus logs), clear wins
+// derived from that test data, and zero the streak — so currentWeekNumber returns 1 and
+// the weekly review reflects only real use going forward. Journal entries are kept.
+export async function restartCurriculum() {
+  const { supabase, userId, courseId } = await activeCourse();
+  const { data: rows } = await supabase.from('items').select('id').eq('course_id', courseId);
+  const ids = (rows ?? []).map((r: { id: string }) => r.id);
+  await Promise.all([
+    ids.length
+      ? supabase.from('progress').delete().eq('user_id', userId).in('item_id', ids)
+      : Promise.resolve(),
+    ids.length
+      ? supabase.from('time_logs').delete().eq('user_id', userId).in('item_id', ids)
+      : Promise.resolve(),
+    supabase.from('time_logs').delete().eq('user_id', userId).is('item_id', null),
     supabase.from('user_achievements').delete().eq('user_id', userId),
   ]);
   await supabase.from('streaks').update({

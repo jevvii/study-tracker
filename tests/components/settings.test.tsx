@@ -7,14 +7,16 @@ const mocks = vi.hoisted(() => ({
   updateSettings: vi.fn().mockResolvedValue({ ok: true }),
   exportUserData: vi.fn().mockResolvedValue('{}'),
   resetUserData: vi.fn().mockResolvedValue({ ok: true }),
+  restartCurriculum: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-const { updateSettings } = mocks;
+const { updateSettings, restartCurriculum } = mocks;
 
 vi.mock('@/lib/data', () => ({
   updateSettings: mocks.updateSettings,
   exportUserData: mocks.exportUserData,
   resetUserData: mocks.resetUserData,
+  restartCurriculum: mocks.restartCurriculum,
 }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
@@ -28,6 +30,7 @@ const base = { user_id: 'u', theme: 'dark' as const, reduce_motion: false, weekl
 describe('SettingsForm', () => {
   beforeEach(() => {
     updateSettings.mockClear();
+    restartCurriculum.mockClear();
   });
 
   it('calls updateSettings when toggling reduce-motion', async () => {
@@ -35,6 +38,14 @@ describe('SettingsForm', () => {
     render(<SettingsForm initial={base} email="a@b.com" />);
     await user.click(screen.getByRole('switch', { name: 'Reduce motion' }));
     expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ reduce_motion: true }));
+  });
+
+  it('restarts the curriculum to week 1 via the confirm dialog', async () => {
+    const user = userEvent.setup();
+    render(<SettingsForm initial={base} email="a@b.com" />);
+    await user.click(screen.getByRole('button', { name: 'Restart' }));
+    await user.click(screen.getByRole('button', { name: 'Restart to week 1' }));
+    expect(restartCurriculum).toHaveBeenCalled();
   });
 
   it('saves the weekly target only when Save settings is clicked', async () => {

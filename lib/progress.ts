@@ -1,3 +1,4 @@
+import { manilaWeekStart, manilaHour, manilaDateKey } from '@/lib/time';
 import type { Item, JournalEntry, Progress, Streak, TimeLog, Track } from '@/lib/types';
 
 export interface Counts { done: number; total: number; pct: number; }
@@ -18,11 +19,11 @@ export function trackCounts(items: Item[], progress: Progress[], track: Track): 
   return { done, total: ids.size, pct: pct(done, ids.size) };
 }
 
+// Monday of the Manila week containing `d`, anchored at UTC midnight of that Manila date.
+// All week math (weeklyHours, dailyBreakdown, weeklyReviewData, currentIsoWeekKey) flows
+// through here so weeks roll over at Manila midnight, not UTC.
 function isoWeekStart(d: Date): Date {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  const day = (date.getUTCDay() + 6) % 7; // Mon=0
-  date.setUTCDate(date.getUTCDate() - day);
-  return date;
+  return manilaWeekStart(d);
 }
 
 export function weeklyHours(logs: TimeLog[], targetMinutes: number, today: Date): { logged: number; target: number } {
@@ -70,9 +71,9 @@ export function streakMicroCopy(streak: number): string {
   return 'A single step starts it.';
 }
 
-/** Time-of-day greeting (spec §4 Hero). */
+/** Time-of-day greeting (spec §4 Hero), based on the Manila hour. */
 export function greeting(d: Date): string {
-  const h = d.getHours();
+  const h = manilaHour(d);
   if (h < 12) return 'Good morning';
   if (h < 18) return 'Good afternoon';
   return 'Good evening';
@@ -175,5 +176,7 @@ export function currentIsoWeekKey(d: Date): string {
 }
 
 export function isMonday(d: Date): boolean {
-  return d.getDay() === 1;
+  // Weekday of the Manila calendar date (not the server's local weekday).
+  const key = manilaDateKey(d);
+  return new Date(key + 'T00:00:00Z').getUTCDay() === 1;
 }

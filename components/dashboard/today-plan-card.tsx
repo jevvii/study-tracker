@@ -5,6 +5,7 @@ import { TaskRow } from '@/components/tracks/task-row';
 import { useProgressOptimistic } from '@/lib/hooks';
 import { toggleProgress, logTime } from '@/lib/data';
 import { shouldCelebrate } from '@/lib/progress';
+import { manilaDateKey } from '@/lib/time';
 import { fireConfetti } from '@/components/confetti';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,7 @@ export function TodayPlanCard({ items, progress, week }: { items: Item[]; progre
 
   const submitTime = () => {
     const m = Math.max(1, Math.round(Number(minutes) || 0));
-    const today = new Date().toISOString().slice(0, 10);
+    const today = manilaDateKey();
     setPopoverOpen(false);
     start(() => { void logTime(m, today); });
   };

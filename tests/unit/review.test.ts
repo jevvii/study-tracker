@@ -66,20 +66,23 @@ describe('streakMicroCopy', () => {
 });
 
 describe('greeting', () => {
-  it('morning/afternoon/evening', () => {
-    expect(greeting(new Date('2026-08-15T08:00:00'))).toBe('Good morning');
-    expect(greeting(new Date('2026-08-15T14:00:00'))).toBe('Good afternoon');
-    expect(greeting(new Date('2026-08-15T20:00:00'))).toBe('Good evening');
+  it('morning/afternoon/evening by Manila hour', () => {
+    // 00:00Z = 08:00 Manila (morning); 06:00Z = 14:00 Manila (afternoon); 12:00Z = 20:00 Manila (evening).
+    expect(greeting(new Date('2026-08-15T00:00:00Z'))).toBe('Good morning');
+    expect(greeting(new Date('2026-08-15T06:00:00Z'))).toBe('Good afternoon');
+    expect(greeting(new Date('2026-08-15T12:00:00Z'))).toBe('Good evening');
   });
 });
 
 describe('week helpers', () => {
-  it('currentIsoWeekKey is stable through the week', () => {
+  it('currentIsoWeekKey is stable through the Manila week', () => {
+    // 2026-08-10 01:00Z = 09:00 Manila Monday → week starts 2026-08-10.
     expect(currentIsoWeekKey(new Date('2026-08-10T01:00:00Z'))).toBe('2026-08-10');
-    expect(currentIsoWeekKey(new Date('2026-08-16T23:00:00Z'))).toBe('2026-08-10');
+    // 2026-08-16 23:00Z = 07:00 Manila Monday Aug 17 → the week rolls over to 2026-08-17.
+    expect(currentIsoWeekKey(new Date('2026-08-16T23:00:00Z'))).toBe('2026-08-17');
   });
-  it('isMonday', () => {
-    expect(isMonday(new Date('2026-08-10T12:00:00Z'))).toBe(true); // 2026-08-10 is Monday
-    expect(isMonday(new Date('2026-08-15T12:00:00Z'))).toBe(false);
+  it('isMonday by Manila calendar date', () => {
+    expect(isMonday(new Date('2026-08-10T12:00:00Z'))).toBe(true); // 20:00 Manila, still Monday Aug 10
+    expect(isMonday(new Date('2026-08-15T12:00:00Z'))).toBe(false); // Saturday Aug 15
   });
 });
