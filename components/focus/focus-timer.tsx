@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlassCard } from '@/components/dashboard/glass-card';
 import { FOCUS_STORAGE_KEY, publishFocus, readFocusSnapshot, type FocusSnapshot, type Phase } from '@/lib/focus-session';
+import { playFocusChime } from '@/lib/focus-audio';
 import type { Item, Settings, TimeLog } from '@/lib/types';
 
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
@@ -12,33 +13,6 @@ const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 } as const;
 const clampMinutes = (n: number) => Math.max(1, Math.min(120, Number.isFinite(n) ? Math.round(n) : 1));
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
-
-/** Short two-tone Web Audio chime. Guarded for SSR; never throws. */
-function chime() {
-  if (typeof window === 'undefined') return;
-  try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const play = (freq: number, start: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + 0.35);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + 0.4);
-    };
-    play(660, 0);
-    play(990, 0.18);
-    setTimeout(() => { ctx.close().catch(() => {}); }, 1200);
-  } catch {
-    /* no-op */
-  }
-}
 
 export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; todayLogs: TimeLog[]; settings: Settings | null }) {
   // Configured durations (seconds), derived from persisted settings with built-in defaults.
@@ -204,14 +178,18 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
       const t = e.target as HTMLElement | null;
       const tag = t?.tagName;
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || t?.isContentEditable) return;
-      if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); setRunning((r) => !r); }
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        if (!running) playFocusChime(phase === 'focus' ? 'focus' : 'break');
+        setRunning((r) => !r);
+      }
       else if (e.key === 'r' || e.key === 'R') { reset(); }
       else if (e.key === 's' || e.key === 'S') { skip(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, focusCount, itemId]);
+  }, [running, phase, focusCount, itemId]);
 
   const logFocus = (secs: number) => {
     const minutes = Math.max(1, Math.round(secs / 60));
@@ -232,29 +210,43 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   };
 
   // Advance to the next phase. Logs focus time and bumps the long-break cadence
-  // only on a *completed* focus segment (not on skip). Auto-starts the break.
+  // Advance one segment, logging focus time only on a *completed* focus segment.
+  // The session loops continuously — each phase auto-starts the next — until the
+  // 4th cycle ends with the long break; after the long break the loop stops (a
+  // fresh focus lands paused) and the "set complete" cue plays.
   function completeSegment() {
-    chime();
     if (phase === 'focus') {
+      playFocusChime('break'); // a break is beginning (auto-started)
       logFocus(durations.focus);
       const next = focusCount + 1;
       setFocusCount(next);
       const breakPhase: Phase = next % 4 === 0 ? 'long' : 'short';
       setPhase(breakPhase);
       setSecondsLeft(durations[breakPhase]);
-      setRunning(true); // auto-start the break
-    } else {
+      setRunning(true); // auto-start the break (continuous loop)
+    } else if (phase === 'long') {
+      // The final long break just ended: a 4-focus set is complete. Stop the
+      // continuous loop, reset for a new set, and play the set-complete cue.
+      playFocusChime('set');
+      setFocusCount(0);
       setPhase('focus');
       setSecondsLeft(durations.focus);
-      setRunning(false); // pause before the next focus
+      setRunning(false);
+    } else {
+      // A short break just ended: auto-start the next focus (continuous loop).
+      playFocusChime('focus');
+      setPhase('focus');
+      setSecondsLeft(durations.focus);
+      setRunning(true);
     }
   }
 
   // Handle a segment that elapsed entirely while the user was away (component
   // unmounted on another page, or tab hidden). Same cadence as completeSegment,
-  // but the next phase lands paused — the user wasn't present to start it.
+  // but the next phase always lands paused — the user wasn't present to start it.
+  // The "set complete" cue still plays if the elapsed segment was the long break,
+  // so a returning user hears that their set finished.
   function completeAway(prevPhase: Phase, prevFocusCount: number) {
-    chime();
     if (prevPhase === 'focus') {
       logFocus(durations.focus);
       const next = prevFocusCount + 1;
@@ -262,6 +254,12 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
       const breakPhase: Phase = next % 4 === 0 ? 'long' : 'short';
       setPhase(breakPhase);
       setSecondsLeft(durations[breakPhase]);
+      setRunning(false);
+    } else if (prevPhase === 'long') {
+      playFocusChime('set');
+      setFocusCount(0);
+      setPhase('focus');
+      setSecondsLeft(durations.focus);
       setRunning(false);
     } else {
       setPhase('focus');
@@ -271,17 +269,26 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   }
 
   function skip() {
-    chime();
     if (phase === 'focus') {
+      playFocusChime('break'); // skipping into a break (auto-started)
       if (elapsed >= 60) logFocus(elapsed);
       const breakPhase: Phase = focusCount % 4 === 0 && focusCount > 0 ? 'long' : 'short';
       setPhase(breakPhase);
       setSecondsLeft(durations[breakPhase]);
       setRunning(true);
-    } else {
+    } else if (phase === 'long') {
+      // Skipping the long break ends the set.
+      playFocusChime('set');
+      setFocusCount(0);
       setPhase('focus');
       setSecondsLeft(durations.focus);
       setRunning(false);
+    } else {
+      // Skipping a short break auto-starts the next focus (continuous loop).
+      playFocusChime('focus');
+      setPhase('focus');
+      setSecondsLeft(durations.focus);
+      setRunning(true);
     }
   }
 
@@ -341,7 +348,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
 
         {/* Controls */}
         <div className="flex items-center gap-2">
-          <Button onClick={() => setRunning((r) => !r)} aria-label={running ? 'Pause' : 'Start'}>
+          <Button onClick={() => { if (!running) playFocusChime(phase === 'focus' ? 'focus' : 'break'); setRunning((r) => !r); }} aria-label={running ? 'Pause' : 'Start'}>
             {running ? 'Pause' : 'Start'}
           </Button>
           <Button variant="outline" onClick={reset} aria-label="Reset timer">Reset</Button>
