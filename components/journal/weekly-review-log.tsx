@@ -68,9 +68,8 @@ export function WeeklyReviewLog({
     return manilaWeekStartsBetween(earliest, currentWeekKey);
   }, [timeLogs, progress, journalEntries, weeklyReviews, currentWeekKey]);
 
-  // Inline view is newest-first (current week on top); the modal timeline is oldest-first.
-  const weeksDesc = useMemo(() => weeksAsc.slice().reverse(), [weeksAsc]);
-
+  // Inline view shows only the current week (expanded). Every other week — past activity,
+  // reflections, the lot — lives in the "More" timeline modal so the Journal stays compact.
   const reflectionFor = (key: string) => weeklyReviews.find((w) => w.week_start === key)?.reflection ?? '';
 
   if (weeksAsc.length === 0) return null;
@@ -90,19 +89,16 @@ export function WeeklyReviewLog({
         )}
       </div>
 
-      {weeksDesc.map((key) => (
-        <WeekReviewCard
-          key={`inline-${key}`}
-          weekKey={key}
-          isCurrent={key === currentWeekKey}
-          items={items}
-          progress={progress}
-          timeLogs={timeLogs}
-          journalEntries={journalEntries}
-          initialReflection={reflectionFor(key)}
-          defaultExpanded={key === currentWeekKey}
-        />
-      ))}
+      <WeekReviewCard
+        weekKey={currentWeekKey}
+        isCurrent
+        items={items}
+        progress={progress}
+        timeLogs={timeLogs}
+        journalEntries={journalEntries}
+        initialReflection={reflectionFor(currentWeekKey)}
+        defaultExpanded
+      />
 
       <Dialog open={timelineOpen} onOpenChange={setTimelineOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">

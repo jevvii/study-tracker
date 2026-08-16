@@ -20,7 +20,7 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('WeeklyReviewLog', () => {
-  it('lists accumulated weeks newest-first, shows stats, and seeds saved reflections', () => {
+  it('shows only the current week inline; past weeks live in the More timeline modal', () => {
     const timeLogs: TimeLog[] = [
       { id: '1', user_id: 'u', date: '2026-08-12', minutes: 120, item_id: null, note: null }, // week of Aug 10
     ];
@@ -31,15 +31,17 @@ describe('WeeklyReviewLog', () => {
       <WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={weeklyReviews} />,
     );
 
-    // Current week always shown; prior week shown (collapsed) because it has activity + a reflection.
+    // Inline, only the current week is shown — past weeks are not rendered here.
     expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.getByText('Week of Aug 10 – Aug 16')).toBeInTheDocument();
-    // 120 min on Aug 12 → 2.0h for that week — visible in the collapsed summary row.
-    expect(screen.getByText('2.0h · 0 done')).toBeInTheDocument();
-    // Past week is collapsed by default, so its reflection textarea is not in the DOM yet.
+    expect(screen.queryByText('Week of Aug 10 – Aug 16')).toBeNull();
     expect(screen.queryByLabelText('Reflection for week of 2026-08-10')).toBeNull();
-    // Expand the prior week to reveal its seeded reflection.
-    fireEvent.click(screen.getByRole('button', { name: /Week of Aug 10/ }));
+
+    // Open the timeline modal: every week (incl. the past one) is expanded with its metrics.
+    fireEvent.click(screen.getByRole('button', { name: /More/ }));
+    expect(screen.getByText('Weekly Review Timeline')).toBeInTheDocument();
+    expect(screen.getByText('Week of Aug 10 – Aug 16')).toBeInTheDocument();
+    // 120 min on Aug 12 → 2.0h for that week.
+    expect(screen.getByText('2.0h · 0 done')).toBeInTheDocument();
     expect((screen.getByLabelText('Reflection for week of 2026-08-10') as HTMLTextAreaElement).value).toBe('Good start.');
   });
 
