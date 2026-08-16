@@ -31,13 +31,30 @@ describe('WeeklyReviewLog', () => {
       <WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={weeklyReviews} />,
     );
 
-    // Current week always shown; prior week shown because it has activity + a reflection.
+    // Current week always shown; prior week shown (collapsed) because it has activity + a reflection.
     expect(screen.getByText('This week')).toBeInTheDocument();
     expect(screen.getByText('Week of Aug 10 – Aug 16')).toBeInTheDocument();
-    // 120 min on Aug 12 → 2.0h for that week.
+    // 120 min on Aug 12 → 2.0h for that week — visible in the collapsed summary row.
     expect(screen.getByText('2.0h · 0 done')).toBeInTheDocument();
-    // Saved reflection seeded into the prior week's textarea.
+    // Past week is collapsed by default, so its reflection textarea is not in the DOM yet.
+    expect(screen.queryByLabelText('Reflection for week of 2026-08-10')).toBeNull();
+    // Expand the prior week to reveal its seeded reflection.
+    fireEvent.click(screen.getByRole('button', { name: /Week of Aug 10/ }));
     expect((screen.getByLabelText('Reflection for week of 2026-08-10') as HTMLTextAreaElement).value).toBe('Good start.');
+  });
+
+  it('keeps the current week expanded by default and hides past empty weeks', () => {
+    // Only a log in the current week (Aug 17); no prior activity and no prior reflections.
+    const timeLogs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-17', minutes: 30, item_id: null, note: null },
+    ];
+    render(<WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={[]} />);
+    // Current week metrics stay constantly visible (expanded by default).
+    expect(screen.getByText('This week')).toBeInTheDocument();
+    expect(screen.getByText('0.5h · 0 done')).toBeInTheDocument();
+    expect(screen.getByLabelText('Reflection for week of 2026-08-17')).toBeInTheDocument();
+    // No prior week rendered at all.
+    expect(screen.queryByText('Week of Aug 10 – Aug 16')).toBeNull();
   });
 
   it('saves the current week reflection via saveWeeklyReview', () => {
@@ -48,13 +65,28 @@ describe('WeeklyReviewLog', () => {
     expect(mocks.saveWeeklyReview).toHaveBeenCalledWith('2026-08-17', 'Real work begins.');
   });
 
-  it('hides past weeks that have no activity and no reflection', () => {
-    // Only a log in the current week (Aug 17); no prior activity and no prior reflections.
+  it('opens a large timeline modal with every week expanded via the More link', () => {
     const timeLogs: TimeLog[] = [
-      { id: '1', user_id: 'u', date: '2026-08-17', minutes: 30, item_id: null, note: null },
+      { id: '1', user_id: 'u', date: '2026-08-12', minutes: 120, item_id: null, note: null }, // week of Aug 10
     ];
-    render(<WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={[]} />);
-    expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.queryByText('Week of Aug 10 – Aug 16')).toBeNull();
+    const weeklyReviews: WeeklyReview[] = [
+      { user_id: 'u', week_start: '2026-08-10', reflection: 'Good start.', updated_at: '' },
+    ];
+    render(
+      <WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={weeklyReviews} />,
+    );
+
+    // More link is present because there is more than one week.
+    expect(screen.getByRole('button', { name: /More/ })).toBeInTheDocument();
+    // Before opening, the past week's reflection textarea is hidden (collapsed inline).
+    expect(screen.queryByLabelText('Reflection for week of 2026-08-10')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /More/ }));
+    // The timeline modal renders with all weeks expanded (oldest → newest).
+    expect(screen.getByText('Weekly Review Timeline')).toBeInTheDocument();
+    // Both weeks are present in the modal (current week also still inline → two occurrences).
+    expect(screen.getAllByText('This week')).toHaveLength(2);
+    // The past week's metrics/reflection are now visible inside the modal.
+    expect((screen.getByLabelText('Reflection for week of 2026-08-10') as HTMLTextAreaElement).value).toBe('Good start.');
   });
 });
