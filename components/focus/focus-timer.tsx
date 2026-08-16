@@ -9,18 +9,57 @@ import { playFocusChime } from '@/lib/focus-audio';
 import type { Item, Settings, TimeLog } from '@/lib/types';
 
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
-const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 } as const;
-const clampMinutes = (n: number) => Math.max(1, Math.min(120, Number.isFinite(n) ? Math.round(n) : 1));
+// Default durations in seconds: 25 / 5 / 15 minutes.
+const DEFAULT_SECONDS = { focus: 1500, short: 300, long: 900 } as const;
+// Clamp a total duration in seconds to a sane, non-zero range (1s .. just under 24h).
+const clampSeconds = (n: number) => Math.max(1, Math.min(86_399, Number.isFinite(n) ? Math.round(n) : 1));
+// Clamp a single H/M/S field to its natural range.
+const clampField = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Number.isFinite(n) ? Math.round(n) : lo));
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
+
+// A duration setter rendered as three labeled partitions: Hours : Minutes : Seconds.
+// `total` is the full duration in seconds; the three inputs are derived from it and
+// recombined on every change, so the parent always holds a single seconds value.
+function DurationField({ label, total, onChange, disabled }: {
+  label: string; total: number; onChange: (secs: number) => void; disabled?: boolean;
+}) {
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const recombine = (nh: number, nm: number, ns: number) => onChange(clampSeconds(nh * 3600 + nm * 60 + ns));
+  const inputCls = 'w-full rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 text-center text-sm text-[var(--text)] tabular-nums outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50';
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">{label}</span>
+      <div className="grid grid-cols-3 gap-1.5">
+        <label className="flex flex-col gap-0.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+          <span>Hours</span>
+          <input type="number" min={0} max={23} value={h} disabled={disabled} aria-label={`${label} hours`}
+            onChange={(e) => recombine(clampField(Number(e.target.value), 0, 23), m, s)} className={inputCls} />
+        </label>
+        <label className="flex flex-col gap-0.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+          <span>Minutes</span>
+          <input type="number" min={0} max={59} value={m} disabled={disabled} aria-label={`${label} minutes`}
+            onChange={(e) => recombine(h, clampField(Number(e.target.value), 0, 59), s)} className={inputCls} />
+        </label>
+        <label className="flex flex-col gap-0.5 text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+          <span>Seconds</span>
+          <input type="number" min={0} max={59} value={s} disabled={disabled} aria-label={`${label} seconds`}
+            onChange={(e) => recombine(h, m, clampField(Number(e.target.value), 0, 59))} className={inputCls} />
+        </label>
+      </div>
+    </div>
+  );
+}
 
 export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; todayLogs: TimeLog[]; settings: Settings | null }) {
   // Configured durations (seconds), derived from persisted settings with built-in defaults.
   const durations = useMemo<Record<Phase, number>>(() => ({
-    focus: (settings?.focus_minutes ?? DEFAULT_MINUTES.focus) * 60,
-    short: (settings?.short_break_minutes ?? DEFAULT_MINUTES.short) * 60,
-    long: (settings?.long_break_minutes ?? DEFAULT_MINUTES.long) * 60,
-  }), [settings?.focus_minutes, settings?.short_break_minutes, settings?.long_break_minutes]);
+    focus: settings?.focus_seconds ?? DEFAULT_SECONDS.focus,
+    short: settings?.short_break_seconds ?? DEFAULT_SECONDS.short,
+    long: settings?.long_break_seconds ?? DEFAULT_SECONDS.long,
+  }), [settings?.focus_seconds, settings?.short_break_seconds, settings?.long_break_seconds]);
 
   const [phase, setPhase] = useState<Phase>('focus');
   const [secondsLeft, setSecondsLeft] = useState(durations.focus);
@@ -35,11 +74,12 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   // in-app page navigations. Armed by the tick effect when a segment starts.
   const endsAtRef = useRef<number | null>(null);
 
-  // Duration editor state — seeded from settings and re-synced when settings change.
+  // Duration editor state (total seconds) — seeded from settings and re-synced when
+  // persisted settings change (e.g. after a save revalidates and new props arrive).
   const [showDurations, setShowDurations] = useState(false);
-  const [editFocus, setEditFocus] = useState(settings?.focus_minutes ?? DEFAULT_MINUTES.focus);
-  const [editShort, setEditShort] = useState(settings?.short_break_minutes ?? DEFAULT_MINUTES.short);
-  const [editLong, setEditLong] = useState(settings?.long_break_minutes ?? DEFAULT_MINUTES.long);
+  const [editFocus, setEditFocus] = useState(settings?.focus_seconds ?? DEFAULT_SECONDS.focus);
+  const [editShort, setEditShort] = useState(settings?.short_break_seconds ?? DEFAULT_SECONDS.short);
+  const [editLong, setEditLong] = useState(settings?.long_break_seconds ?? DEFAULT_SECONDS.long);
   const [saving, saveStart] = useTransition();
 
   const total = durations[phase];
@@ -154,10 +194,10 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
 
   // Keep the editor fields in sync when persisted settings change (e.g. after a save revalidates).
   useEffect(() => {
-    setEditFocus(settings?.focus_minutes ?? DEFAULT_MINUTES.focus);
-    setEditShort(settings?.short_break_minutes ?? DEFAULT_MINUTES.short);
-    setEditLong(settings?.long_break_minutes ?? DEFAULT_MINUTES.long);
-  }, [settings?.focus_minutes, settings?.short_break_minutes, settings?.long_break_minutes]);
+    setEditFocus(settings?.focus_seconds ?? DEFAULT_SECONDS.focus);
+    setEditShort(settings?.short_break_seconds ?? DEFAULT_SECONDS.short);
+    setEditLong(settings?.long_break_seconds ?? DEFAULT_SECONDS.long);
+  }, [settings?.focus_seconds, settings?.short_break_seconds, settings?.long_break_seconds]);
 
   // When saved durations change, apply the new length to the current phase and pause,
   // so a running session is never silently stretched or truncated. Skipped on the
@@ -202,9 +242,9 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   const saveDurations = () => {
     saveStart(() => {
       void updateSettings({
-        focus_minutes: clampMinutes(editFocus),
-        short_break_minutes: clampMinutes(editShort),
-        long_break_minutes: clampMinutes(editLong),
+        focus_seconds: clampSeconds(editFocus),
+        short_break_seconds: clampSeconds(editShort),
+        long_break_seconds: clampSeconds(editLong),
       });
     });
   };
@@ -389,31 +429,14 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
             <span aria-hidden="true">{showDurations ? '▾' : '▸'}</span> Durations
           </button>
           {showDurations && (
-            <div className="mt-2">
-              <div className="grid grid-cols-3 gap-2">
-                {([
-                  { label: 'Focus', value: editFocus, set: setEditFocus },
-                  { label: 'Short', value: editShort, set: setEditShort },
-                  { label: 'Long', value: editLong, set: setEditLong },
-                ] as const).map(({ label, value, set }) => (
-                  <label key={label} className="flex flex-col gap-1 text-xs text-[var(--text-muted)]">
-                    {label}
-                    <input
-                      type="number"
-                      min={1}
-                      max={120}
-                      value={value}
-                      disabled={focusRunning}
-                      onChange={(e) => set(clampMinutes(Number(e.target.value)))}
-                      className="rounded-lg border border-[var(--border)] bg-transparent px-2 py-1 text-sm text-[var(--text)] tabular-nums outline-none focus-visible:border-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </label>
-                ))}
-              </div>
-              <Button variant="outline" size="sm" onClick={saveDurations} disabled={saving || focusRunning} className="mt-2 w-full">
+            <div className="mt-2 flex flex-col gap-3">
+              <DurationField label="Focus" total={editFocus} onChange={setEditFocus} disabled={focusRunning} />
+              <DurationField label="Short break" total={editShort} onChange={setEditShort} disabled={focusRunning} />
+              <DurationField label="Long break" total={editLong} onChange={setEditLong} disabled={focusRunning} />
+              <Button variant="outline" size="sm" onClick={saveDurations} disabled={saving || focusRunning} className="w-full">
                 {saving ? 'Saving…' : 'Save durations'}
               </Button>
-              <p className="mt-1.5 text-[11px] text-[var(--text-muted)] text-center">Saving applies the new length to the current phase and pauses the timer.</p>
+              <p className="text-[11px] text-[var(--text-muted)] text-center">Saving applies the new length to the current phase and pauses the timer.</p>
             </div>
           )}
         </div>

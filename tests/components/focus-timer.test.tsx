@@ -19,9 +19,9 @@ const settings: Settings = {
   user_id: 'u1',
   theme: 'dark',
   reduce_motion: false,
-  focus_minutes: 25,
-  short_break_minutes: 5,
-  long_break_minutes: 15,
+  focus_seconds: 1500,
+  short_break_seconds: 300,
+  long_break_seconds: 900,
 };
 
 const FOCUS = 25 * 60; // 1500s

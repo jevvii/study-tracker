@@ -33,9 +33,9 @@ export interface Settings {
   weekly_target_minutes?: number;
   starfield_on?: boolean;
   confetti_on?: boolean;
-  focus_minutes?: number;
-  short_break_minutes?: number;
-  long_break_minutes?: number;
+  focus_seconds?: number;
+  short_break_seconds?: number;
+  long_break_seconds?: number;
 }
 
 export interface JournalEntry {

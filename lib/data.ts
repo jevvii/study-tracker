@@ -152,9 +152,13 @@ export async function logTime(minutes: number, date: string, itemId?: string) {
   return { ok: true };
 }
 
-export async function updateSettings(patch: Partial<Pick<Settings, 'theme' | 'reduce_motion' | 'weekly_target_minutes' | 'starfield_on' | 'confetti_on' | 'focus_minutes' | 'short_break_minutes' | 'long_break_minutes'>>) {
+export async function updateSettings(patch: Partial<Pick<Settings, 'theme' | 'reduce_motion' | 'weekly_target_minutes' | 'starfield_on' | 'confetti_on' | 'focus_seconds' | 'short_break_seconds' | 'long_break_seconds'>>) {
   const { supabase, userId } = await uid();
-  const { error } = await supabase.from('settings').update(patch).eq('user_id', userId);
+  // Upsert (not update) so a settings row is created if one doesn't yet exist for
+  // the user — otherwise `.update().eq('user_id')` would silently affect 0 rows and
+  // the saved change would never persist. On conflict, only the patched columns
+  // change; existing columns (theme, etc.) are preserved.
+  const { error } = await supabase.from('settings').upsert({ user_id: userId, ...patch }, { onConflict: 'user_id' });
   if (error) throw error;
   revalidateAll();
   return { ok: true };
