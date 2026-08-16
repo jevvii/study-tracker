@@ -40,12 +40,15 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 export function SettingsForm({ initial, email }: { initial: Settings; email: string | null }) {
   const [pending, start] = useTransition();
   const [weekly, setWeekly] = useState(Math.round((initial.weekly_target_minutes ?? 600) / 60));
+  const [savedWeekly, setSavedWeekly] = useState(weekly);
   const [starfield, setStarfield] = useState(initial.starfield_on ?? true);
   const [confetti, setConfetti] = useState(initial.confetti_on ?? true);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetting, startReset] = useTransition();
   const [exporting, startExport] = useTransition();
   const router = useRouter();
+
+  const weeklyDirty = weekly !== savedWeekly;
 
   const apply = (patch: Partial<Settings>) => start(() => { void updateSettings(patch as any); });
 
@@ -70,10 +73,16 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
     localStorage.setItem('confetti', String(on));
     apply({ confetti_on: on });
   };
-  const commitWeekly = (hours: number) => {
-    const clamped = Math.max(1, Math.min(80, hours || 0));
+  // Explicit save for the weekly target — the only field on this page that
+  // doesn't live-apply (the toggles do, with instant visual feedback). Clamps
+  // to a sane hour range, persists, and marks the field clean.
+  const saveSettings = () => {
+    const clamped = Math.max(1, Math.min(80, Number.isFinite(weekly) ? Math.round(weekly) : 1));
     setWeekly(clamped);
-    apply({ weekly_target_minutes: clamped * 60 });
+    start(() => {
+      void updateSettings({ weekly_target_minutes: clamped * 60 } as any);
+      setSavedWeekly(clamped);
+    });
   };
 
   const doExport = () => startExport(async () => {
@@ -102,7 +111,7 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
   };
 
   return (
-    <div className="space-y-5 max-w-md">
+    <div className="space-y-5 max-w-md mx-auto">
       <Section title="Appearance" hint="How the app looks and feels.">
         <Row label="Theme" hint="Dark, light, or follow system.">
           <Select defaultValue={initial.theme} onValueChange={setTheme} disabled={pending}>
@@ -123,7 +132,7 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
       </Section>
 
       <Section title="Study Goals" hint="Targets that drive your dashboard.">
-        <Row label="Weekly target" hint="Hours you aim to study each week.">
+        <Row label="Weekly target" hint="Hours you aim to study each week. Click Save to apply.">
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -131,7 +140,6 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
               max={80}
               value={weekly}
               onChange={(e) => setWeekly(Number(e.target.value))}
-              onBlur={(e) => commitWeekly(Number(e.target.value))}
               className="w-20 text-right"
               aria-label="Weekly target hours"
             />
@@ -174,6 +182,14 @@ export function SettingsForm({ initial, email }: { initial: Settings; email: str
           <Button variant="outline" size="sm" onClick={signOut}>Sign out</Button>
         </div>
       </Section>
+
+      {/* Explicit save for the weekly target (the non-live field above). */}
+      <div className="flex items-center justify-end gap-3">
+        {weeklyDirty && <span className="text-xs text-[var(--text-muted)]">Unsaved changes</span>}
+        <Button onClick={saveSettings} disabled={pending || !weeklyDirty}>
+          {pending ? 'Saving…' : 'Save settings'}
+        </Button>
+      </div>
     </div>
   );
 }

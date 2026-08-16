@@ -37,14 +37,28 @@ describe('SettingsForm', () => {
     expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ reduce_motion: true }));
   });
 
-  it('updates weekly target on blur', async () => {
+  it('saves the weekly target only when Save settings is clicked', async () => {
+    const user = userEvent.setup();
+    render(<SettingsForm initial={base} email="a@b.com" />);
+    const input = screen.getByLabelText('Weekly target hours') as HTMLInputElement;
+    // Save is disabled until the weekly target actually changes.
+    expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled();
+    await user.clear(input);
+    await user.type(input, '8');
+    // Editing alone does not persist (no blur auto-save anymore).
+    expect(updateSettings).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
+    expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ weekly_target_minutes: 480 }));
+  });
+
+  it('clamps the weekly target into the 1–80 hour range on save', async () => {
     const user = userEvent.setup();
     render(<SettingsForm initial={base} email="a@b.com" />);
     const input = screen.getByLabelText('Weekly target hours') as HTMLInputElement;
     await user.clear(input);
-    await user.type(input, '8');
-    await user.tab();
-    expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ weekly_target_minutes: 480 }));
+    await user.type(input, '999');
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
+    expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ weekly_target_minutes: 80 * 60 }));
   });
 
   it('toggles confetti via the confetti switch', async () => {
