@@ -7,6 +7,7 @@ import { MotionToggle } from '@/components/motion-toggle';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { CourseSwitcher } from '@/components/courses/course-switcher';
+import { FocusPill } from '@/components/nav/focus-pill';
 import type { Course } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +51,7 @@ export function Navbar({ initials, active, enrolled }: { initials: string; activ
         </ul>
 
         <div className="flex items-center gap-1">
+          <FocusPill />
           <div className="hidden sm:block">
             <CourseSwitcher active={active} enrolled={enrolled} />
           </div>

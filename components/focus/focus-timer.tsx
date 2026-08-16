@@ -4,15 +4,12 @@ import { logTime, updateSettings } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlassCard } from '@/components/dashboard/glass-card';
+import { FOCUS_STORAGE_KEY, publishFocus, readFocusSnapshot, type FocusSnapshot, type Phase } from '@/lib/focus-session';
 import type { Item, Settings, TimeLog } from '@/lib/types';
 
-type Phase = 'focus' | 'short' | 'long';
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
 const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 } as const;
 const clampMinutes = (n: number) => Math.max(1, Math.min(120, Number.isFinite(n) ? Math.round(n) : 1));
-// sessionStorage key for the in-flight session. sessionStorage is scoped to the
-// tab and cleared when the tab/window closes — so a closed site does not resume.
-const STORAGE_KEY = 'focus-timer:v1';
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
@@ -40,42 +37,6 @@ function chime() {
     setTimeout(() => { ctx.close().catch(() => {}); }, 1200);
   } catch {
     /* no-op */
-  }
-}
-
-/** Persisted session snapshot, written to sessionStorage on every state change. */
-type Snapshot = {
-  v: 1;
-  phase: Phase;
-  running: boolean;
-  focusCount: number;
-  itemId: string;
-  secondsLeft: number;   // remaining seconds (authoritative when paused)
-  endsAt: number | null; // epoch-ms end timestamp (authoritative when running)
-};
-
-function readSnapshot(): Snapshot | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as Partial<Snapshot>;
-    if (s.v !== 1) return null;
-    if (s.phase !== 'focus' && s.phase !== 'short' && s.phase !== 'long') return null;
-    const endsAt = typeof s.endsAt === 'number' && Number.isFinite(s.endsAt) ? s.endsAt : null;
-    const secondsLeft = typeof s.secondsLeft === 'number' && Number.isFinite(s.secondsLeft)
-      ? Math.max(0, Math.round(s.secondsLeft)) : 0;
-    return {
-      v: 1,
-      phase: s.phase,
-      running: Boolean(s.running),
-      focusCount: Number(s.focusCount) || 0,
-      itemId: typeof s.itemId === 'string' ? s.itemId : '',
-      secondsLeft,
-      endsAt,
-    };
-  } catch {
-    return null;
   }
 }
 
@@ -147,7 +108,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   // time. sessionStorage is wiped when the tab/window closes, so a closed site
   // does not resume (the running session aborts and a fresh one starts).
   useEffect(() => {
-    const s = readSnapshot();
+    const s = readFocusSnapshot();
     if (!s) return;
     setItemId(s.itemId);
     if (s.running && s.endsAt != null) {
@@ -189,14 +150,15 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   }, [running]);
 
   // Persist the session to sessionStorage on every change so it survives
-  // unmount (page navigation) and tab switches. The first run is skipped so we
-  // don't clobber the saved session with default state before the hydrate
-  // effect above has a chance to restore it.
+  // unmount (page navigation) and tab switches, and publish it so the navbar
+  // FocusPill can show a live indicator on other pages. The first run is
+  // skipped so we don't clobber the saved session with default state before the
+  // hydrate effect above has a chance to restore it.
   const persistedRef = useRef(false);
   useEffect(() => {
     if (!persistedRef.current) { persistedRef.current = true; return; }
     if (typeof window === 'undefined') return;
-    const snap: Snapshot = {
+    const snap: FocusSnapshot = {
       v: 1,
       phase,
       running,
@@ -205,7 +167,8 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
       secondsLeft,
       endsAt: running ? endsAtRef.current : null,
     };
-    try { window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snap)); } catch { /* ignore quota / disabled */ }
+    try { window.sessionStorage.setItem(FOCUS_STORAGE_KEY, JSON.stringify(snap)); } catch { /* ignore quota / disabled */ }
+    publishFocus(snap);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, running, focusCount, itemId, secondsLeft]);
 
