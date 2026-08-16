@@ -14,3 +14,18 @@ if (!('localStorage' in globalThis) || !globalThis.localStorage) {
   };
   Object.defineProperty(globalThis, 'localStorage', { value: stub, configurable: true, writable: true });
 }
+
+// Same opaque-origin gap applies to sessionStorage; stub it too so components
+// that persist transient session state (e.g. the focus timer) work in tests.
+if (!('sessionStorage' in globalThis) || !globalThis.sessionStorage) {
+  const store = new Map<string, string>();
+  const stub: Storage = {
+    get length() { return store.size; },
+    clear: () => store.clear(),
+    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+    removeItem: (k: string) => { store.delete(k); },
+    setItem: (k: string, v: string) => { store.set(k, String(v)); },
+  };
+  Object.defineProperty(globalThis, 'sessionStorage', { value: stub, configurable: true, writable: true });
+}

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { logTime, updateSettings } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +10,9 @@ type Phase = 'focus' | 'short' | 'long';
 const PHASE_LABEL: Record<Phase, string> = { focus: 'Focus', short: 'Short break', long: 'Long break' };
 const DEFAULT_MINUTES = { focus: 25, short: 5, long: 15 } as const;
 const clampMinutes = (n: number) => Math.max(1, Math.min(120, Number.isFinite(n) ? Math.round(n) : 1));
+// sessionStorage key for the in-flight session. sessionStorage is scoped to the
+// tab and cleared when the tab/window closes — so a closed site does not resume.
+const STORAGE_KEY = 'focus-timer:v1';
 
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
 
@@ -40,6 +43,42 @@ function chime() {
   }
 }
 
+/** Persisted session snapshot, written to sessionStorage on every state change. */
+type Snapshot = {
+  v: 1;
+  phase: Phase;
+  running: boolean;
+  focusCount: number;
+  itemId: string;
+  secondsLeft: number;   // remaining seconds (authoritative when paused)
+  endsAt: number | null; // epoch-ms end timestamp (authoritative when running)
+};
+
+function readSnapshot(): Snapshot | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const s = JSON.parse(raw) as Partial<Snapshot>;
+    if (s.v !== 1) return null;
+    if (s.phase !== 'focus' && s.phase !== 'short' && s.phase !== 'long') return null;
+    const endsAt = typeof s.endsAt === 'number' && Number.isFinite(s.endsAt) ? s.endsAt : null;
+    const secondsLeft = typeof s.secondsLeft === 'number' && Number.isFinite(s.secondsLeft)
+      ? Math.max(0, Math.round(s.secondsLeft)) : 0;
+    return {
+      v: 1,
+      phase: s.phase,
+      running: Boolean(s.running),
+      focusCount: Number(s.focusCount) || 0,
+      itemId: typeof s.itemId === 'string' ? s.itemId : '',
+      secondsLeft,
+      endsAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; todayLogs: TimeLog[]; settings: Settings | null }) {
   // Configured durations (seconds), derived from persisted settings with built-in defaults.
   const durations = useMemo<Record<Phase, number>>(() => ({
@@ -55,6 +94,12 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   const [itemId, setItemId] = useState<string>('');
   const [, start] = useTransition();
 
+  // Absolute epoch-ms timestamp at which the current segment ends. Held in a ref
+  // (not state) so the countdown tracks real elapsed time even when the tab is
+  // backgrounded (timers throttle to ~1/min) or the component unmounts between
+  // in-app page navigations. Armed by the tick effect when a segment starts.
+  const endsAtRef = useRef<number | null>(null);
+
   // Duration editor state — seeded from settings and re-synced when settings change.
   const [showDurations, setShowDurations] = useState(false);
   const [editFocus, setEditFocus] = useState(settings?.focus_minutes ?? DEFAULT_MINUTES.focus);
@@ -69,18 +114,100 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   // session logs to the task it was started with (no mid-session re-attribution).
   const focusRunning = running && phase === 'focus';
 
-  // Tick down once per second while running.
+  function tickOnce() {
+    if (endsAtRef.current === null) return;
+    const remaining = Math.ceil((endsAtRef.current - Date.now()) / 1000);
+    if (remaining <= 0) {
+      setSecondsLeft(0);
+      // Drop the end anchor immediately so the next tick (before the effect
+      // re-runs and arms the next segment) is a no-op instead of a double fire.
+      endsAtRef.current = null;
+      completeSegment();
+    } else {
+      setSecondsLeft(remaining);
+    }
+  }
+
+  // Tick down once per second while running. The countdown is anchored to an
+  // absolute end timestamp rather than decrementing a counter, so the displayed
+  // remaining time stays correct after the tab was backgrounded (setInterval is
+  // throttled while hidden) and resumes at the right point when the user returns.
   useEffect(() => {
-    if (!running) return;
-    const id = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) { completeSegment(); return 0; }
-        return s - 1;
-      });
-    }, 1000);
+    if (!running) { endsAtRef.current = null; return; }
+    endsAtRef.current = Date.now() + secondsLeft * 1000;
+    const id = setInterval(tickOnce, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, phase]);
+
+  // Restore an in-flight session from sessionStorage on mount (after SSR
+  // hydration). This keeps the timer alive across in-app page navigations and
+  // browser tab switches: the component unmounts and remounts, but the session —
+  // anchored to an absolute end timestamp — resumes at the correct remaining
+  // time. sessionStorage is wiped when the tab/window closes, so a closed site
+  // does not resume (the running session aborts and a fresh one starts).
+  useEffect(() => {
+    const s = readSnapshot();
+    if (!s) return;
+    setItemId(s.itemId);
+    if (s.running && s.endsAt != null) {
+      const remaining = Math.ceil((s.endsAt - Date.now()) / 1000);
+      if (remaining > 0) {
+        // Resume mid-segment at the true remaining time.
+        setPhase(s.phase);
+        setFocusCount(s.focusCount);
+        setSecondsLeft(remaining);
+        endsAtRef.current = s.endsAt;
+        setRunning(true);
+      } else {
+        // The segment finished while the component was unmounted (user on
+        // another page) or the tab was hidden. Credit the completed focus
+        // segment and land on the next phase paused — the user wasn't here to
+        // auto-start it.
+        completeAway(s.phase, s.focusCount);
+      }
+    } else {
+      setPhase(s.phase);
+      setFocusCount(s.focusCount);
+      setSecondsLeft(s.secondsLeft);
+      endsAtRef.current = null;
+      setRunning(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync immediately when the tab becomes visible again: the interval is
+  // throttled while hidden, so recompute from the absolute end timestamp now
+  // (and fire completion if the segment elapsed in the background).
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === 'visible' && running && endsAtRef.current !== null) tickOnce();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running]);
+
+  // Persist the session to sessionStorage on every change so it survives
+  // unmount (page navigation) and tab switches. The first run is skipped so we
+  // don't clobber the saved session with default state before the hydrate
+  // effect above has a chance to restore it.
+  const persistedRef = useRef(false);
+  useEffect(() => {
+    if (!persistedRef.current) { persistedRef.current = true; return; }
+    if (typeof window === 'undefined') return;
+    const snap: Snapshot = {
+      v: 1,
+      phase,
+      running,
+      focusCount,
+      itemId,
+      secondsLeft,
+      endsAt: running ? endsAtRef.current : null,
+    };
+    try { window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snap)); } catch { /* ignore quota / disabled */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, running, focusCount, itemId, secondsLeft]);
 
   // Dim the starfield during focus, undim during breaks; always restore on unmount.
   useEffect(() => {
@@ -96,8 +223,13 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   }, [settings?.focus_minutes, settings?.short_break_minutes, settings?.long_break_minutes]);
 
   // When saved durations change, apply the new length to the current phase and pause,
-  // so a running session is never silently stretched or truncated.
+  // so a running session is never silently stretched or truncated. Skipped on the
+  // initial mount (where it would otherwise clobber a session restored by the
+  // hydrate effect with default state); the initial secondsLeft already derives
+  // from durations via useState.
+  const durationsInitRef = useRef(false);
   useEffect(() => {
+    if (!durationsInitRef.current) { durationsInitRef.current = true; return; }
     setSecondsLeft(durations[phase]);
     setRunning(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,7 +269,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   };
 
   // Advance to the next phase. Logs focus time and bumps the long-break cadence
-  // only on a *completed* focus segment (not on skip).
+  // only on a *completed* focus segment (not on skip). Auto-starts the break.
   function completeSegment() {
     chime();
     if (phase === 'focus') {
@@ -152,6 +284,26 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
       setPhase('focus');
       setSecondsLeft(durations.focus);
       setRunning(false); // pause before the next focus
+    }
+  }
+
+  // Handle a segment that elapsed entirely while the user was away (component
+  // unmounted on another page, or tab hidden). Same cadence as completeSegment,
+  // but the next phase lands paused — the user wasn't present to start it.
+  function completeAway(prevPhase: Phase, prevFocusCount: number) {
+    chime();
+    if (prevPhase === 'focus') {
+      logFocus(durations.focus);
+      const next = prevFocusCount + 1;
+      setFocusCount(next);
+      const breakPhase: Phase = next % 4 === 0 ? 'long' : 'short';
+      setPhase(breakPhase);
+      setSecondsLeft(durations[breakPhase]);
+      setRunning(false);
+    } else {
+      setPhase('focus');
+      setSecondsLeft(durations.focus);
+      setRunning(false);
     }
   }
 
