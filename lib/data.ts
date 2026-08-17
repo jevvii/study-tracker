@@ -66,7 +66,7 @@ function revalidateAll() {
 
 export async function getDashboard() {
   const { supabase, userId, courseId } = await activeCourse();
-  const [items, progress, streak, settings, timeLogs, journalEntries, course] = await Promise.all([
+  const [items, progress, streak, settings, timeLogs, journalEntries, course, enrollment] = await Promise.all([
     supabase.from('items').select('*').eq('course_id', courseId),
     supabase.from('progress').select('*').eq('user_id', userId),
     supabase.from('streaks').select('*').eq('user_id', userId).single(),
@@ -74,8 +74,12 @@ export async function getDashboard() {
     supabase.from('time_logs').select('*').eq('user_id', userId),
     supabase.from('journal_entries').select('*').eq('user_id', userId).order('date', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('courses').select('*').eq('id', courseId).maybeSingle(),
+    // The active course's enrollment row — its enrolled_at is the course start
+    // date that paces the curriculum week (lib/progress.currentWeekNumber).
+    supabase.from('user_courses').select('enrolled_at').eq('user_id', userId).eq('course_id', courseId).maybeSingle(),
   ]);
   const c = course.data as Course | null;
+  const courseStart = (enrollment.data as { enrolled_at: string | null } | null)?.enrolled_at ?? null;
   return {
     items: items.data ?? [],
     progress: progress.data ?? [],
@@ -85,6 +89,7 @@ export async function getDashboard() {
     journalEntries: (journalEntries.data ?? []) as JournalEntry[],
     courseId,
     canEdit: !!c && c.owner_user_id === userId,
+    courseStart,
   };
 }
 
@@ -370,8 +375,9 @@ export async function resetUserData() {
 
 // Restart the active course's curriculum back to week 1: clear completion state and
 // logged study time for the active course (plus general no-task focus logs), clear wins
-// derived from that test data, and zero the streak — so currentWeekNumber returns 1 and
-// the weekly review reflects only real use going forward. Journal entries are kept.
+// derived from that test data, zero the streak, and reset the course start date to now
+// — so the calendar-paced currentWeekNumber returns 1 and the weekly review reflects
+// only real use going forward. Journal entries are kept.
 export async function restartCurriculum() {
   const { supabase, userId, courseId } = await activeCourse();
   const { data: rows } = await supabase.from('items').select('id').eq('course_id', courseId);
@@ -385,6 +391,9 @@ export async function restartCurriculum() {
       : Promise.resolve(),
     supabase.from('time_logs').delete().eq('user_id', userId).is('item_id', null),
     supabase.from('user_achievements').delete().eq('user_id', userId),
+    // Reset the course start date so the curriculum week returns to 1 under the
+    // calendar-paced model (enrolled_at doubles as the week-1 anchor).
+    supabase.from('user_courses').update({ enrolled_at: new Date().toISOString() }).eq('user_id', userId).eq('course_id', courseId),
   ]);
   await supabase.from('streaks').update({
     current_streak: 0, longest_streak: 0, last_active_date: null,

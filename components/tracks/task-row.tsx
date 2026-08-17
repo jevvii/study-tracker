@@ -11,12 +11,16 @@ export function TaskRow({
   onToggle,
   onOpen,
   minutes,
+  overdueWeek,
 }: {
   item: Item;
   status: ProgressStatus;
   onToggle: (itemId: string, next: ProgressStatus) => void;
   onOpen?: (item: Item) => void;
   minutes?: number;
+  // When set, the item rolled forward from an earlier curriculum week; render a
+  // warning-toned "Wk N" pill so it's distinguishable from the current week's rows.
+  overdueWeek?: number;
 }) {
   const done = status === 'done';
   const title = (
@@ -56,6 +60,14 @@ export function TaskRow({
         <label htmlFor={item.id} className={cn('text-sm leading-snug cursor-pointer flex-1', done && 'line-through text-[var(--text-muted)]')}>
           {title}
         </label>
+      )}
+      {typeof overdueWeek === 'number' && (
+        <span
+          className="shrink-0 mt-0.5 text-xs tabular-nums text-[var(--warning)] inline-flex items-center rounded-full border border-[var(--warning)]/40 bg-[var(--warning)]/10 px-1.5 py-0.5"
+          title={`Overdue from week ${overdueWeek}`}
+        >
+          Wk {overdueWeek}
+        </span>
       )}
       <TimeBadge minutes={minutes ?? 0} className="mt-0.5" />
     </motion.div>

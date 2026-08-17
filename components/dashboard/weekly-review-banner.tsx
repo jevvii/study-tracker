@@ -10,11 +10,13 @@ export function WeeklyReviewBanner({
   progress,
   timeLogs,
   journalEntries,
+  courseStart,
 }: {
   items: Item[];
   progress: Progress[];
   timeLogs: TimeLog[];
   journalEntries: JournalEntry[];
+  courseStart?: string | null;
 }) {
   const [show, setShow] = useState(false);
   const [open, setOpen] = useState(false);
@@ -39,7 +41,7 @@ export function WeeklyReviewBanner({
     localStorage.setItem(`review-dismissed-${currentIsoWeekKey(new Date())}`, '1');
   };
 
-  const week = currentWeekNumber(items, progress);
+  const week = currentWeekNumber(items, progress, courseStart, new Date());
 
   return (
     <>

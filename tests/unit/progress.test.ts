@@ -82,11 +82,33 @@ describe('nextStreak', () => {
 });
 
 describe('currentWeekNumber', () => {
-  it('returns the lowest week with an incomplete plan item', () => {
+  it('returns the lowest week with an incomplete plan item (no courseStart → completion-gated fallback)', () => {
     const done: Progress[] = [
       { user_id: 'u', item_id: 'a', status: 'done', completed_at: 'x', notes: null, updated_at: '' },
     ];
     expect(currentWeekNumber(items, done)).toBe(1); // week 1 still has 'b' incomplete
+  });
+});
+
+describe('currentWeekNumber (calendar-paced)', () => {
+  // 2026-08-17 is a Monday in Manila; 2026-08-18 is the Tuesday in that week.
+  const today = new Date('2026-08-18T12:00:00Z');
+
+  it('returns the elapsed Manila-week count since the course start', () => {
+    // courseStart 2026-08-10 (Monday) → 1 elapsed week → week 2.
+    expect(currentWeekNumber(items, [], '2026-08-10', today)).toBe(2);
+  });
+  it('is week 1 during the course-start week', () => {
+    expect(currentWeekNumber(items, [], '2026-08-17', today)).toBe(1);
+  });
+  it('clamps to the curriculum max (12) when the start is far in the past', () => {
+    expect(currentWeekNumber(items, [], '2026-01-01', today)).toBe(12);
+  });
+  it('uses the calendar week even when every item is done (not the completion-gated 12)', () => {
+    const allDone: Progress[] = ['a', 'b', 'c'].map((id) => (
+      { user_id: 'u', item_id: id, status: 'done', completed_at: 'x', notes: null, updated_at: '' } as Progress
+    ));
+    expect(currentWeekNumber(items, allDone, '2026-08-10', today)).toBe(2);
   });
 });
 

@@ -39,6 +39,17 @@ describe('TaskRow', () => {
     render(<TaskRow item={item} status="not_started" onToggle={vi.fn()} minutes={90} />);
     expect(screen.getByText('1.30')).toBeInTheDocument();
   });
+
+  it('renders an overdue Wk N badge when overdueWeek is set', () => {
+    render(<TaskRow item={item} status="not_started" onToggle={vi.fn()} overdueWeek={2} />);
+    expect(screen.getByText('Wk 2')).toBeInTheDocument();
+    expect(screen.getByTitle('Overdue from week 2')).toBeInTheDocument();
+  });
+
+  it('renders no overdue badge when overdueWeek is absent', () => {
+    render(<TaskRow item={item} status="not_started" onToggle={vi.fn()} />);
+    expect(screen.queryByText('Wk 2')).toBeNull();
+  });
 });
 
 describe('TaskRow onOpen', () => {

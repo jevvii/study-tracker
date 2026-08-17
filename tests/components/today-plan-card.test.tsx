@@ -90,3 +90,28 @@ describe('TodayPlanCard row interactions', () => {
     expect(beta.compareDocumentPosition(alpha) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
+
+describe('TodayPlanCard overdue roll-forward', () => {
+  const w1: Item = { id: 'w1', course_id: 'se', track: 'plan', sort_order: 1, title: 'Wk1 leftover', metadata: { week: 1 } };
+  const w2: Item = { id: 'w2', course_id: 'se', track: 'plan', sort_order: 1, title: 'Wk2 current', metadata: { week: 2 } };
+
+  it('surfaces earlier-week incomplete items in an Overdue section with a Wk N badge', () => {
+    render(<TodayPlanCard items={[w2]} courseItems={[w1, w2]} progress={[]} week={2} timeLogs={[]} courseId="se" canEdit={false} />);
+    // Overdue section header is shown.
+    expect(screen.getByText(/Overdue/)).toBeInTheDocument();
+    // The earlier-week item rolls forward and shows which week it's from.
+    expect(screen.getByText('Wk1 leftover')).toBeInTheDocument();
+    expect(screen.getByText('Wk 1')).toBeInTheDocument();
+    // The current-week item still appears, under a This week label.
+    expect(screen.getByText('Wk2 current')).toBeInTheDocument();
+    expect(screen.getByText('This week')).toBeInTheDocument();
+  });
+
+  it('hides the Overdue section once the earlier-week item is done', () => {
+    const progress = [{ user_id: 'u', item_id: 'w1', status: 'done', completed_at: 'x', notes: null, updated_at: '' }];
+    render(<TodayPlanCard items={[w2]} courseItems={[w1, w2]} progress={progress as any} week={2} timeLogs={[]} courseId="se" canEdit={false} />);
+    expect(screen.queryByText(/Overdue/)).toBeNull();
+    expect(screen.queryByText('Wk1 leftover')).toBeNull();
+    expect(screen.getByText('Wk2 current')).toBeInTheDocument();
+  });
+});

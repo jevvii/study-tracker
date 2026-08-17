@@ -24,9 +24,9 @@ export function HeroZone({
         <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">Week {week} of 12</p>
         <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight">
           {greeting}. {tasksLeft > 0 ? (
-            <span className="text-[var(--text-muted)] font-normal">{tasksLeft} {taskWord} today.</span>
+            <span className="text-[var(--text-muted)] font-normal">{tasksLeft} {taskWord} this week.</span>
           ) : (
-            <span className="text-[var(--text-muted)] font-normal">all clear today.</span>
+            <span className="text-[var(--text-muted)] font-normal">all clear this week.</span>
           )}
         </h1>
         <div className="mt-4">

@@ -46,6 +46,18 @@ export function TodayPlanCard({
     [items, minsByItemMap],
   );
 
+  // Overdue: plan items from earlier curriculum weeks that still aren't done. Under
+  // the calendar-paced week model the current week can advance past an unfinished
+  // week, so those items roll forward into this week's plan. Ordered oldest week
+  // first (most overdue), then most-time-first within a week. Uses the optimistic
+  // status so completing one removes it from the section instantly.
+  const overdue = useMemo(() => {
+    const done = (id: string) => optimistic.find((p) => p.item_id === id)?.status === 'done';
+    return courseItems
+      .filter((i) => i.track === 'plan' && typeof i.metadata.week === 'number' && i.metadata.week < week && !done(i.id))
+      .sort((a, b) => (a.metadata.week! - b.metadata.week!) || (minsByItemMap[b.id] ?? 0) - (minsByItemMap[a.id] ?? 0) || a.sort_order - b.sort_order);
+  }, [courseItems, week, optimistic, minsByItemMap]);
+
   const onToggle = (itemId: string, next: ProgressStatus) => {
     const prevDone = doneCount();
     toggle(itemId, next);
@@ -64,21 +76,52 @@ export function TodayPlanCard({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Today’s Plan · Week {week}</h2>
       </div>
-      {ordered.length === 0 ? (
+      {overdue.length === 0 && ordered.length === 0 ? (
         <p className="text-sm text-[var(--text-muted)] py-4">No plan items for this week.</p>
       ) : (
-        <div className="divide-y divide-[var(--border)] -mx-1 px-1">
-          {ordered.map((i) => (
-            <TaskRow
-              key={i.id}
-              item={i}
-              status={statusOf(i.id)}
-              onToggle={onToggle}
-              onOpen={(it) => setSelectedId(it.id)}
-              minutes={minsByItemMap[i.id] ?? 0}
-            />
-          ))}
-        </div>
+        <>
+          {overdue.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--warning)] mb-1">
+                Overdue · {overdue.length}
+              </p>
+              <div className="divide-y divide-[var(--border)] -mx-1 px-1">
+                {overdue.map((i) => (
+                  <TaskRow
+                    key={i.id}
+                    item={i}
+                    status={statusOf(i.id)}
+                    onToggle={onToggle}
+                    onOpen={(it) => setSelectedId(it.id)}
+                    minutes={minsByItemMap[i.id] ?? 0}
+                    overdueWeek={i.metadata.week}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {ordered.length > 0 && (
+            <div>
+              {overdue.length > 0 && (
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1 mt-1">
+                  This week
+                </p>
+              )}
+              <div className="divide-y divide-[var(--border)] -mx-1 px-1">
+                {ordered.map((i) => (
+                  <TaskRow
+                    key={i.id}
+                    item={i}
+                    status={statusOf(i.id)}
+                    onToggle={onToggle}
+                    onOpen={(it) => setSelectedId(it.id)}
+                    minutes={minsByItemMap[i.id] ?? 0}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
       <div className="mt-3 pt-3 border-t border-[var(--border)]">
         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>

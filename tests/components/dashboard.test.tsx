@@ -36,6 +36,7 @@ describe('Dashboard', () => {
       journalEntries: [],
       courseId: 'se-realworld',
       canEdit: false,
+      courseStart: null,
     });
     const ui = await Dashboard();
     render(ui);
@@ -64,10 +65,11 @@ describe('Dashboard', () => {
       journalEntries: [],
       courseId: 'se-realworld',
       canEdit: false,
+      courseStart: null,
     });
     const ui = await Dashboard();
     render(ui);
-    expect(screen.getByText(/all clear today/i)).toBeInTheDocument();
+    expect(screen.getByText(/all clear this week/i)).toBeInTheDocument();
     // within() keeps lint happy if unused otherwise
     void within;
   });

@@ -53,7 +53,33 @@ export function shouldCelebrate(prevDone: number, nextDone: number, milestones: 
   return nextDone > prevDone && milestones.has(itemId);
 }
 
-export function currentWeekNumber(items: Item[], progress: Progress[]): number {
+/** Highest curriculum week defined by plan items, floored at 12 (the seeded length). */
+function planMaxWeek(items: Item[]): number {
+  const weeks = items.filter((i) => i.track === 'plan' && i.metadata.week).map((i) => i.metadata.week!);
+  return Math.max(weeks.length ? Math.max(...weeks) : 12, 12);
+}
+
+/**
+ * The current curriculum week.
+ *
+ * Calendar-paced when a `courseStart` is available: week N is how many Manila weeks
+ * have elapsed since the Monday of the course-start week. This lets an item that
+ * isn't finished within its own week roll forward into the current week's plan
+ * (where it shows as overdue) instead of pinning the user to the earliest
+ * unfinished week forever. Clamped to [1, planMaxWeek] so the week never runs
+ * past the end of the curriculum.
+ *
+ * Without a `courseStart` (tests, or an enrollment row that hasn't been written
+ * yet), falls back to the completion-gated "earliest week with an incomplete plan
+ * item" rule — the previous behavior — so callers without a start date keep working.
+ */
+export function currentWeekNumber(items: Item[], progress: Progress[], courseStart?: string | null, today: Date = new Date()): number {
+  if (courseStart) {
+    const startMonday = manilaWeekStart(new Date(courseStart + 'T00:00:00Z'));
+    const nowMonday = manilaWeekStart(today);
+    const elapsed = Math.floor((nowMonday.getTime() - startMonday.getTime()) / (7 * 86_400_000));
+    return Math.min(Math.max(elapsed + 1, 1), planMaxWeek(items));
+  }
   const doneIds = new Set(progress.filter((p) => p.status === 'done').map((p) => p.item_id));
   const weeks = items.filter((i) => i.track === 'plan' && i.metadata.week).map((i) => i.metadata.week!);
   for (const w of [...new Set(weeks)].sort((a, b) => a - b)) {

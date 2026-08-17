@@ -7,15 +7,21 @@ import { TracksZone } from '@/components/dashboard/tracks-zone';
 import { WeeklyReviewBanner } from '@/components/dashboard/weekly-review-banner';
 
 export default async function Dashboard() {
-  const { items, progress, streak, timeLogs, settings, journalEntries, courseId, canEdit } = await getDashboard();
+  const { items, progress, streak, timeLogs, settings, journalEntries, courseId, canEdit, courseStart } = await getDashboard();
   const overall = overallProgress(items, progress);
-  const week = currentWeekNumber(items, progress);
+  const week = currentWeekNumber(items, progress, courseStart, new Date());
   const weekItems = items.filter((i) => i.track === 'plan' && i.metadata.week === week);
   const target = settings?.weekly_target_minutes ?? 600;
   const hours = weeklyHours(timeLogs, target, new Date());
   const streakNum = streak?.current_streak ?? 0;
   const statusOf = (id: string) => progress.find((p) => p.item_id === id)?.status ?? 'not_started';
-  const tasksLeft = weekItems.filter((i) => statusOf(i.id) !== 'done').length;
+  // Items from earlier weeks that still aren't done roll forward into this week's
+  // plan (calendar-paced weeks can advance past an unfinished week). They're shown
+  // in the Today's Plan "Overdue" section and counted in the hero's tasks-left.
+  const overdueItems = items.filter(
+    (i) => i.track === 'plan' && typeof i.metadata.week === 'number' && i.metadata.week < week && statusOf(i.id) !== 'done',
+  );
+  const tasksLeft = weekItems.filter((i) => statusOf(i.id) !== 'done').length + overdueItems.length;
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto">
@@ -24,6 +30,7 @@ export default async function Dashboard() {
         progress={progress}
         timeLogs={timeLogs}
         journalEntries={journalEntries}
+        courseStart={courseStart}
       />
       <HeroZone
         week={week}
