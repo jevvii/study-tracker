@@ -180,3 +180,22 @@ export function isMonday(d: Date): boolean {
   const key = manilaDateKey(d);
   return new Date(key + 'T00:00:00Z').getUTCDay() === 1;
 }
+
+/**
+ * Total minutes logged per item_id across all time logs (null item_id skipped).
+ * Powers the per-row time badge and the within-group "most time first" ordering.
+ */
+export function minutesByItem(logs: TimeLog[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const l of logs) {
+    if (!l.item_id) continue;
+    map[l.item_id] = (map[l.item_id] ?? 0) + l.minutes;
+  }
+  return map;
+}
+
+/** Compact human time for row badges: '' when ≤0, 'X.Xh' once ≥60m, else 'Xm'. */
+export function formatMinutes(m: number): string {
+  if (m <= 0) return '';
+  return m >= 60 ? `${(m / 60).toFixed(1)}h` : `${m}m`;
+}

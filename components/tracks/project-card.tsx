@@ -1,6 +1,7 @@
 'use client';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { TimeBadge } from './time-badge';
 import { cn } from '@/lib/utils';
 import type { Item, ProgressStatus } from '@/lib/types';
 
@@ -15,11 +16,13 @@ export function ProjectCard({
   status,
   onToggle,
   onSelect,
+  minutes,
 }: {
   item: Item;
   status: ProgressStatus;
   onToggle: (itemId: string, next: ProgressStatus) => void;
   onSelect?: (item: Item) => void;
+  minutes?: number;
 }) {
   const done = status === 'done';
 
@@ -39,7 +42,10 @@ export function ProjectCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h3 className={cn('font-medium', done && 'line-through text-[var(--text-muted)]')}>{item.title}</h3>
-            <span className={cn('shrink-0 text-xs rounded-full border px-2 py-0.5', chipClass)}>{STATUS_LABEL[status]}</span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <TimeBadge minutes={minutes ?? 0} />
+              <span className={cn('text-xs rounded-full border px-2 py-0.5', chipClass)}>{STATUS_LABEL[status]}</span>
+            </div>
           </div>
           {item.description && <p className="text-sm text-[var(--text-muted)] mt-1">{item.description}</p>}
           {onSelect && (

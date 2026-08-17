@@ -14,13 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProgressOptimistic } from '@/lib/hooks';
 import { toggleProgress, deleteItem } from '@/lib/data';
-import { shouldCelebrate } from '@/lib/progress';
+import { shouldCelebrate, minutesByItem } from '@/lib/progress';
 import { fireConfetti } from '@/components/confetti';
 import { cn } from '@/lib/utils';
 import type { Item, Progress, ProgressStatus, TimeLog, Track } from '@/lib/types';
 
 type Filter = 'all' | 'not_started' | 'in_progress' | 'done';
-type Sort = 'default' | 'name' | 'recent';
+type Sort = 'time' | 'default' | 'name' | 'recent';
 type Group = { key: string; title: string; href?: string; items: Item[] };
 
 const FILTERS: { id: Filter; label: string }[] = [
@@ -58,7 +58,7 @@ export function TrackBrowser({
   const { optimistic, toggle } = useProgressOptimistic(progress);
   const [, start] = useTransition();
   const [filter, setFilter] = useState<Filter>('all');
-  const [sort, setSort] = useState<Sort>('default');
+  const [sort, setSort] = useState<Sort>('time');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Resources-only: filter/group by the topic each resource covers.
@@ -84,6 +84,8 @@ export function TrackBrowser({
     start(() => { void toggleProgress(itemId, next); });
   };
 
+  const minsByItemMap = useMemo(() => minutesByItem(timeLogs), [timeLogs]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = items.filter((i) => {
@@ -101,12 +103,16 @@ export function TrackBrowser({
         const cb = progress.find((p) => p.item_id === b.id)?.completed_at ?? '';
         return cb.localeCompare(ca);
       });
+    } else if (sort === 'time') {
+      // Most-time-first within each group; ties break on curriculum order so
+      // equal-time items keep a stable, predictable arrangement.
+      list.sort((a, b) => (minsByItemMap[b.id] ?? 0) - (minsByItemMap[a.id] ?? 0) || a.sort_order - b.sort_order);
     } else {
       list.sort((a, b) => a.sort_order - b.sort_order);
     }
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, filter, sort, query, optimistic, track, topicFilter]);
+  }, [items, filter, sort, query, optimistic, track, topicFilter, minsByItemMap]);
 
   const groups = useMemo<Group[]>(() => {
     if (track === 'plan') {
@@ -162,11 +168,12 @@ export function TrackBrowser({
 
   const renderItem = (item: Item) => {
     const status = statusOf(item.id);
+    const mins = minsByItemMap[item.id] ?? 0;
     const row =
-      track === 'plan' ? <TaskRow item={item} status={status} onToggle={onToggle} onOpen={(it) => setSelectedId(it.id)} />
-        : track === 'topic' ? <TopicRow item={item} status={status} onToggle={onToggle} />
-          : track === 'project' ? <ProjectCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />
-            : <ResourceCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} />;
+      track === 'plan' ? <TaskRow item={item} status={status} onToggle={onToggle} onOpen={(it) => setSelectedId(it.id)} minutes={mins} />
+        : track === 'topic' ? <TopicRow item={item} status={status} onToggle={onToggle} minutes={mins} />
+          : track === 'project' ? <ProjectCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} minutes={mins} />
+            : <ResourceCard item={item} status={status} onToggle={onToggle} onSelect={(it) => setSelectedId(it.id)} minutes={mins} />;
 
     if (!canEdit) return <div key={item.id}>{row}</div>;
 
@@ -261,6 +268,7 @@ export function TrackBrowser({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="time">Most time</SelectItem>
             <SelectItem value="default">Default</SelectItem>
             <SelectItem value="name">Name A–Z</SelectItem>
             <SelectItem value="recent">Recently completed</SelectItem>

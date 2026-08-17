@@ -7,7 +7,7 @@ import { TracksZone } from '@/components/dashboard/tracks-zone';
 import { WeeklyReviewBanner } from '@/components/dashboard/weekly-review-banner';
 
 export default async function Dashboard() {
-  const { items, progress, streak, timeLogs, settings, journalEntries } = await getDashboard();
+  const { items, progress, streak, timeLogs, settings, journalEntries, courseId, canEdit } = await getDashboard();
   const overall = overallProgress(items, progress);
   const week = currentWeekNumber(items, progress);
   const weekItems = items.filter((i) => i.track === 'plan' && i.metadata.week === week);
@@ -34,7 +34,7 @@ export default async function Dashboard() {
         tasksLeft={tasksLeft}
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <TodayPlanCard items={weekItems} courseItems={items} progress={progress} week={week} />
+        <TodayPlanCard items={weekItems} courseItems={items} progress={progress} week={week} timeLogs={timeLogs} courseId={courseId} canEdit={canEdit} />
         <StreakHoursCard
           streak={streakNum}
           longest={streak?.longest_streak ?? 0}

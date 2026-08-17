@@ -76,6 +76,17 @@ export function ItemDrawer({
 
         {item.description && <p className="text-sm text-[var(--text-muted)]">{item.description}</p>}
 
+        {item.metadata.url && (
+          <a
+            href={item.metadata.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-sm text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+          >
+            Open reference <ExternalLink className="size-3.5" />
+          </a>
+        )}
+
         {coveredTopics.length > 0 && (
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Covers these topics</p>

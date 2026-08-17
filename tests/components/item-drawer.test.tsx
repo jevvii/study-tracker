@@ -94,3 +94,31 @@ describe('ItemDrawer relationships', () => {
     expect(screen.getByText('Architecture diagrams.')).toBeInTheDocument();
   });
 });
+
+describe('ItemDrawer reference URL', () => {
+  it('renders an "Open reference" link for the item metadata url', () => {
+    const plan: Item = {
+      id: 'se-plan-w1-3', course_id: 'c', track: 'plan', sort_order: 3,
+      title: 'C4 model docs (reading)', description: 'Read the C4 model site.',
+      metadata: { week: 1, month: 1, hours: 22, kind: 'reading', url: 'https://c4model.com' },
+    };
+    render(
+      <ItemDrawer item={plan} progress={undefined} timeLogs={[]} open onOpenChange={() => {}} courseId="c" canEdit={false} />,
+    );
+    const link = screen.getByRole('link', { name: /Open reference/ });
+    expect(link).toHaveAttribute('href', 'https://c4model.com');
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('renders no reference link when the item has no url', () => {
+    const plan: Item = {
+      id: 'p', course_id: 'c', track: 'plan', sort_order: 1,
+      title: 'No-link reading', description: 'A plain item.',
+      metadata: { week: 1, kind: 'reading' },
+    };
+    render(
+      <ItemDrawer item={plan} progress={undefined} timeLogs={[]} open onOpenChange={() => {}} courseId="c" canEdit={false} />,
+    );
+    expect(screen.queryByRole('link', { name: /Open reference/ })).toBeNull();
+  });
+});

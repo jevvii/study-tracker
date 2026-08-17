@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toggleProgress } from '@/lib/data';
 import type { Item, Progress } from '@/lib/types';
 import { ExternalLink } from 'lucide-react';
+import { TimeBadge } from './time-badge';
 
 export function ResourceList({ items, progress }: { items: Item[]; progress: Progress[] }) {
   const [filter, setFilter] = useState<'all' | 'book' | 'video' | 'doc' | 'article'>('all');
@@ -30,7 +31,7 @@ export function ResourceList({ items, progress }: { items: Item[]; progress: Pro
   );
 }
 
-export function ResourceRow({ item, progress, tags }: { item: Item; progress?: Progress; tags?: string[] }) {
+export function ResourceRow({ item, progress, tags, minutes }: { item: Item; progress?: Progress; tags?: string[]; minutes?: number }) {
   const done = progress?.status === 'done';
   const [pending, start] = useTransition();
   return (
@@ -51,6 +52,7 @@ export function ResourceRow({ item, progress, tags }: { item: Item; progress?: P
         )}
       </div>
       <span className="text-xs uppercase tracking-wider text-[var(--text-muted)]">{item.metadata.type}</span>
+      <TimeBadge minutes={minutes ?? 0} />
       {item.metadata.url && (
         <a href={item.metadata.url} target="_blank" rel="noreferrer" className="text-[var(--accent)] rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]" aria-label={`Open ${item.title}`}>
           <ExternalLink className="size-4" />

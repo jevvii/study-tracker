@@ -34,6 +34,8 @@ describe('Dashboard', () => {
       settings: { user_id: 'u', theme: 'dark', reduce_motion: false, weekly_target_minutes: 600, starfield_on: true, confetti_on: true },
       timeLogs: [],
       journalEntries: [],
+      courseId: 'se-realworld',
+      canEdit: false,
     });
     const ui = await Dashboard();
     render(ui);
@@ -60,6 +62,8 @@ describe('Dashboard', () => {
       settings: { user_id: 'u', theme: 'dark', reduce_motion: false },
       timeLogs: [],
       journalEntries: [],
+      courseId: 'se-realworld',
+      canEdit: false,
     });
     const ui = await Dashboard();
     render(ui);

@@ -105,3 +105,29 @@ describe('TrackBrowser resources by topic', () => {
     expect(screen.getAllByText('Resource One').length).toBe(2); // appears under both topics
   });
 });
+
+describe('TrackBrowser most-time-first ordering', () => {
+  // Two weeks so we can prove the within-week order changes but the week
+  // group order (curriculum) does not.
+  const planItems: Item[] = [
+    { id: 'w1a', course_id: 'c', track: 'plan', sort_order: 1, title: 'Alpha', metadata: { week: 1, kind: 'reading' } },
+    { id: 'w1b', course_id: 'c', track: 'plan', sort_order: 2, title: 'Beta', metadata: { week: 1, kind: 'reading' } },
+    { id: 'w2c', course_id: 'c', track: 'plan', sort_order: 3, title: 'Gamma', metadata: { week: 2, kind: 'reading' } },
+  ];
+
+  it('sorts items within a week by time desc (ties keep curriculum order) and keeps weeks in order', () => {
+    const timeLogs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-18', minutes: 30, item_id: 'w1b', note: null },
+    ];
+    render(
+      <TrackBrowser track="plan" items={planItems} progress={[]} timeLogs={timeLogs} courseId="c" canEdit={false} />,
+    );
+    // 'Most time' is the default sort: Beta (30m) precedes Alpha (0m) in week 1.
+    const beta = screen.getByText('Beta');
+    const alpha = screen.getByText('Alpha');
+    expect(beta.compareDocumentPosition(alpha) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Week group order stays curriculum (1 → 2): Alpha (week 1) precedes Gamma (week 2).
+    const gamma = screen.getByText('Gamma');
+    expect(alpha.compareDocumentPosition(gamma) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTrack } from '@/lib/data';
+import { minutesByItem } from '@/lib/progress';
 import { TrackPage } from '@/components/tracks/track-page';
 import { TopicStudiedToggle } from '@/components/tracks/topic-studied-toggle';
 import { ResourceRow } from '@/components/tracks/resource-row';
@@ -16,7 +17,12 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ se
   const topic = topics.items.find((i) => i.metadata.section === sectionNum) as Item | undefined;
   if (!topic) notFound();
   const progress = topics.progress.find((p) => p.item_id === topic.id);
-  const linked = (resources.items as Item[]).filter((r) => r.metadata.topics?.includes(topic.id));
+  const linkedAll = (resources.items as Item[]).filter((r) => r.metadata.topics?.includes(topic.id));
+  // Most-studied resource first within this topic; ties keep curriculum order.
+  const minsByItemMap = minutesByItem(resources.timeLogs);
+  const linked = [...linkedAll].sort(
+    (a, b) => (minsByItemMap[b.id] ?? 0) - (minsByItemMap[a.id] ?? 0) || a.sort_order - b.sort_order,
+  );
 
   // Map this topic's outline ids → sub-section titles, for tagging linked resources.
   const outline = topic.metadata.outline ?? [];
@@ -65,7 +71,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ se
       ) : (
         <div className="divide-y divide-[var(--border)]">
           {linked.map((r) => (
-            <ResourceRow key={r.id} item={r} progress={resources.progress.find((p) => p.item_id === r.id)} tags={tagsFor(r.id)} />
+            <ResourceRow key={r.id} item={r} progress={resources.progress.find((p) => p.item_id === r.id)} tags={tagsFor(r.id)} minutes={minsByItemMap[r.id] ?? 0} />
           ))}
         </div>
       )}

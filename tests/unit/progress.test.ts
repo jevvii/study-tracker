@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber, weeklyReviewData } from '@/lib/progress';
+import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber, weeklyReviewData, minutesByItem, formatMinutes } from '@/lib/progress';
 import type { Item, Progress, Streak, TimeLog } from '@/lib/types';
 
 const items: Item[] = [
@@ -126,5 +126,35 @@ describe('weeklyReviewData', () => {
     const r2 = weeklyReviewData(itemsA, progressA, [], [], today);
     expect(r2.itemsDone).toHaveLength(1);
     expect(r2.itemsDone[0].id).toBe('a1');
+  });
+});
+
+describe('minutesByItem', () => {
+  it('sums minutes per item_id and skips null item_id logs', () => {
+    const logs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-18', minutes: 25, item_id: 'a', note: null },
+      { id: '2', user_id: 'u', date: '2026-08-18', minutes: 35, item_id: 'a', note: null },
+      { id: '3', user_id: 'u', date: '2026-08-18', minutes: 90, item_id: 'b', note: null },
+      { id: '4', user_id: 'u', date: '2026-08-18', minutes: 60, item_id: null, note: null },
+    ];
+    expect(minutesByItem(logs)).toEqual({ a: 60, b: 90 });
+  });
+  it('returns an empty map for no logs', () => {
+    expect(minutesByItem([])).toEqual({});
+  });
+});
+
+describe('formatMinutes', () => {
+  it('returns empty string for zero or negative', () => {
+    expect(formatMinutes(0)).toBe('');
+    expect(formatMinutes(-5)).toBe('');
+  });
+  it('uses minutes under an hour', () => {
+    expect(formatMinutes(25)).toBe('25m');
+    expect(formatMinutes(59)).toBe('59m');
+  });
+  it('uses hours at or above 60', () => {
+    expect(formatMinutes(60)).toBe('1.0h');
+    expect(formatMinutes(90)).toBe('1.5h');
   });
 });

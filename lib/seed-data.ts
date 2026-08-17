@@ -9,7 +9,7 @@ export const SEED_ITEMS: Item[] = [
   { id: 'se-plan-w1-2', course_id: 'se-realworld', track: 'plan', sort_order: 2, title: 'Read A Philosophy of Software Design (Ousterhout)',
     metadata: { week: 1, month: 1, hours: 22, kind: 'reading' } },
   { id: 'se-plan-w1-3', course_id: 'se-realworld', track: 'plan', sort_order: 3, title: 'C4 model docs (reading)',
-    metadata: { week: 1, month: 1, hours: 22, kind: 'reading' } },
+    metadata: { week: 1, month: 1, hours: 22, kind: 'reading', url: 'https://c4model.com' } },
   { id: 'se-plan-w1-4', course_id: 'se-realworld', track: 'plan', sort_order: 4, title: 'Draw C4 diagrams + write ADR-001',
     metadata: { week: 1, month: 1, hours: 22, kind: 'hands_on' } },
 

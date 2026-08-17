@@ -47,9 +47,11 @@ export function ItemForm({
     if (track === 'topic') {
       metadata.section = Number(section) || undefined;
     }
+    // A reference URL can be attached to any track (e.g. a reading links to the
+    // docs it summarizes); it is not resource-specific.
+    metadata.url = url || undefined;
     if (track === 'resource') {
       metadata.type = type;
-      metadata.url = url || undefined;
       metadata.author = author || undefined;
       metadata.source_url = sourceUrl || undefined;
     }
@@ -76,6 +78,10 @@ export function ItemForm({
           <div>
             <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Description</label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Reference URL</label>
+            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
           </div>
           {track === 'plan' && (
             <>
@@ -120,10 +126,6 @@ export function ItemForm({
                     {TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">URL</label>
-                <Input value={url} onChange={(e) => setUrl(e.target.value)} />
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Author</label>

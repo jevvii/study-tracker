@@ -66,14 +66,16 @@ function revalidateAll() {
 
 export async function getDashboard() {
   const { supabase, userId, courseId } = await activeCourse();
-  const [items, progress, streak, settings, timeLogs, journalEntries] = await Promise.all([
+  const [items, progress, streak, settings, timeLogs, journalEntries, course] = await Promise.all([
     supabase.from('items').select('*').eq('course_id', courseId),
     supabase.from('progress').select('*').eq('user_id', userId),
     supabase.from('streaks').select('*').eq('user_id', userId).single(),
     supabase.from('settings').select('*').eq('user_id', userId).single(),
     supabase.from('time_logs').select('*').eq('user_id', userId),
     supabase.from('journal_entries').select('*').eq('user_id', userId).order('date', { ascending: false }).order('created_at', { ascending: false }),
+    supabase.from('courses').select('*').eq('id', courseId).maybeSingle(),
   ]);
+  const c = course.data as Course | null;
   return {
     items: items.data ?? [],
     progress: progress.data ?? [],
@@ -81,6 +83,8 @@ export async function getDashboard() {
     settings: settings.data,
     timeLogs: (timeLogs.data ?? []) as TimeLog[],
     journalEntries: (journalEntries.data ?? []) as JournalEntry[],
+    courseId,
+    canEdit: !!c && c.owner_user_id === userId,
   };
 }
 

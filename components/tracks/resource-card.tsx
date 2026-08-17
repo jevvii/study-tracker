@@ -1,6 +1,7 @@
 'use client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ExternalLink } from 'lucide-react';
+import { TimeBadge } from './time-badge';
 import { cn } from '@/lib/utils';
 import type { Item, ProgressStatus } from '@/lib/types';
 
@@ -21,11 +22,13 @@ export function ResourceCard({
   status,
   onToggle,
   onSelect,
+  minutes,
 }: {
   item: Item;
   status: ProgressStatus;
   onToggle: (itemId: string, next: ProgressStatus) => void;
   onSelect: (item: Item) => void;
+  minutes?: number;
 }) {
   const done = status === 'done';
   const fav = favicon(item.metadata.url);
@@ -56,6 +59,7 @@ export function ResourceCard({
         <div className="mt-1 flex items-center gap-2 text-xs text-[var(--text-muted)]">
           <span aria-label={`Type ${item.metadata.type}`}>{TYPE_BADGE[item.metadata.type ?? ''] ?? '📄'} {item.metadata.type}</span>
           {item.metadata.author && <span className="truncate">· {item.metadata.author}</span>}
+          <TimeBadge minutes={minutes ?? 0} className="ml-auto" />
         </div>
       </button>
       {item.metadata.url && (
