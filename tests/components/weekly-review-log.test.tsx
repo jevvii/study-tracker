@@ -40,8 +40,8 @@ describe('WeeklyReviewLog', () => {
     fireEvent.click(screen.getByRole('button', { name: /More/ }));
     expect(screen.getByText('Weekly Review Timeline')).toBeInTheDocument();
     expect(screen.getByText('Week of Aug 10 – Aug 16')).toBeInTheDocument();
-    // 120 min on Aug 12 → 2.0h for that week.
-    expect(screen.getByText('2.0h · 0 done')).toBeInTheDocument();
+    // 120 min on Aug 12 → 2.00 (H.MM) for that week.
+    expect(screen.getByText('2.00 · 0 done')).toBeInTheDocument();
     expect((screen.getByLabelText('Reflection for week of 2026-08-10') as HTMLTextAreaElement).value).toBe('Good start.');
   });
 
@@ -53,7 +53,7 @@ describe('WeeklyReviewLog', () => {
     render(<WeeklyReviewLog items={items} progress={[]} timeLogs={timeLogs} journalEntries={[]} weeklyReviews={[]} />);
     // Current week metrics stay constantly visible (expanded by default).
     expect(screen.getByText('This week')).toBeInTheDocument();
-    expect(screen.getByText('0.5h · 0 done')).toBeInTheDocument();
+    expect(screen.getByText('0.30 · 0 done')).toBeInTheDocument();
     expect(screen.getByLabelText('Reflection for week of 2026-08-17')).toBeInTheDocument();
     // No prior week rendered at all.
     expect(screen.queryByText('Week of Aug 10 – Aug 16')).toBeNull();

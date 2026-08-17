@@ -149,12 +149,13 @@ describe('formatMinutes', () => {
     expect(formatMinutes(0)).toBe('');
     expect(formatMinutes(-5)).toBe('');
   });
-  it('uses minutes under an hour', () => {
-    expect(formatMinutes(25)).toBe('25m');
-    expect(formatMinutes(59)).toBe('59m');
-  });
-  it('uses hours at or above 60', () => {
-    expect(formatMinutes(60)).toBe('1.0h');
-    expect(formatMinutes(90)).toBe('1.5h');
+  it('uses the H.MM convention (hours.minutes), matching the Streak & Hours card', () => {
+    expect(formatMinutes(5)).toBe('0.05');
+    expect(formatMinutes(25)).toBe('0.25');
+    expect(formatMinutes(50)).toBe('0.50');
+    expect(formatMinutes(59)).toBe('0.59');
+    expect(formatMinutes(60)).toBe('1.00');
+    expect(formatMinutes(90)).toBe('1.30');
+    expect(formatMinutes(100)).toBe('1.40');
   });
 });

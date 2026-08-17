@@ -4,14 +4,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { weeklyReviewData, dayLabel } from '@/lib/progress';
+import { weeklyReviewData, dayLabel, formatMinutes } from '@/lib/progress';
 import { manilaWeekKey, manilaWeekStartsBetween, manilaDateKey } from '@/lib/time';
 import { saveWeeklyReview } from '@/lib/data';
 import { MOOD_EMOJI } from '@/lib/achievements';
 import type { Item, JournalEntry, Mood, Progress, TimeLog, WeeklyReview } from '@/lib/types';
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const hours = (min: number) => (min / 60).toFixed(1);
 
 function pretty(iso: string): string {
   return new Date(iso + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -151,7 +150,7 @@ function WeekReviewCard({
 
   const maxDaily = Math.max(1, ...review.daily.map((d) => d.minutes));
   const dirty = reflection !== initialReflection;
-  const summary = `${hours(review.thisWeekMinutes)}h · ${review.itemsDone.length} done`;
+  const summary = `${formatMinutes(review.thisWeekMinutes)} · ${review.itemsDone.length} done`;
   const label = isCurrent ? 'This week' : weekRangeLabel(weekKey);
 
   const save = () => {
@@ -191,7 +190,7 @@ function WeekReviewCard({
                 <div className="flex-1 h-1.5 rounded bg-[var(--border)] overflow-hidden">
                   <div className="h-full bg-[var(--accent)]" style={{ width: `${(d.minutes / maxDaily) * 100}%` }} />
                 </div>
-                <span className="w-10 text-right tabular-nums text-[var(--text-muted)]">{hours(d.minutes)}h</span>
+                <span className="w-10 text-right tabular-nums text-[var(--text-muted)]">{formatMinutes(d.minutes)}</span>
               </div>
             ))}
           </div>

@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { weeklyReviewData, dayLabel } from '@/lib/progress';
+import { weeklyReviewData, dayLabel, formatMinutes } from '@/lib/progress';
 import { saveWeeklyReview } from '@/lib/data';
 import { manilaWeekKey } from '@/lib/time';
 import { MOOD_EMOJI } from '@/lib/achievements';
@@ -34,7 +34,6 @@ export function WeeklyReviewModal({
   const review = weeklyReviewData(items, progress, timeLogs, journalEntries, new Date());
 
   const maxDaily = Math.max(1, ...review.daily.map((d) => d.minutes));
-  const hours = (min: number) => (min / 60).toFixed(1);
   const trackLabel = (it: Item) => it.track === 'plan' ? 'Plan' : it.track === 'project' ? 'Project' : it.track === 'topic' ? 'Topic' : 'Resource';
 
   const save = () => {
@@ -53,7 +52,7 @@ export function WeeklyReviewModal({
         <DialogDescription className="sr-only">Your study activity this week.</DialogDescription>
 
         <div className="grid grid-cols-2 gap-3">
-          <Stat label="Hours" value={`${hours(review.thisWeekMinutes)} hrs`} delta={review.lastWeekMinutes ? `${review.thisWeekMinutes - review.lastWeekMinutes >= 0 ? '+' : ''}${hours(review.thisWeekMinutes - review.lastWeekMinutes)} vs last` : undefined} />
+          <Stat label="Hours" value={formatMinutes(review.thisWeekMinutes)} delta={review.lastWeekMinutes ? `${review.thisWeekMinutes - review.lastWeekMinutes >= 0 ? '+' : '-'}${formatMinutes(Math.abs(review.thisWeekMinutes - review.lastWeekMinutes))} vs last` : undefined} />
           <Stat label="Items Done" value={`${review.itemsDone.length}`} delta={review.itemsDoneLastWeek ? `${review.itemsDone.length - review.itemsDoneLastWeek >= 0 ? '+' : ''}${review.itemsDone.length - review.itemsDoneLastWeek} vs last` : undefined} />
         </div>
 
@@ -79,7 +78,7 @@ export function WeeklyReviewModal({
                 <div className="flex-1 h-2 rounded bg-[var(--border)] overflow-hidden">
                   <div className="h-full bg-[var(--accent)]" style={{ width: `${(d.minutes / maxDaily) * 100}%` }} />
                 </div>
-                <span className="w-12 text-right tabular-nums text-[var(--text-muted)]">{hours(d.minutes)}h</span>
+                <span className="w-12 text-right tabular-nums text-[var(--text-muted)]">{formatMinutes(d.minutes)}</span>
               </div>
             ))}
           </div>

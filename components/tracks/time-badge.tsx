@@ -8,6 +8,9 @@ import { cn } from '@/lib/utils';
  */
 export function TimeBadge({ minutes, className }: { minutes: number; className?: string }) {
   if (minutes <= 0) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const spoken = h > 0 ? `${h}h ${m}m` : `${m}m`;
   return (
     <span
       className={cn(
@@ -15,7 +18,7 @@ export function TimeBadge({ minutes, className }: { minutes: number; className?:
         'inline-flex items-center rounded-full border border-[var(--border)] px-1.5 py-0.5',
         className,
       )}
-      aria-label={`${formatMinutes(minutes)} logged`}
+      aria-label={`${spoken} logged`}
       title="Time logged"
     >
       {formatMinutes(minutes)}

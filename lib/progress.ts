@@ -194,8 +194,14 @@ export function minutesByItem(logs: TimeLog[]): Record<string, number> {
   return map;
 }
 
-/** Compact human time for row badges: '' when ≤0, 'X.Xh' once ≥60m, else 'Xm'. */
+/**
+ * Compact human time for row badges, in the same `H.MM` (hours.minutes)
+ * convention the Streak & Hours card uses — e.g. 100m → "1.40", 50m → "0.50",
+ * 25m → "0.25". Empty for ≤0 so rows with no logged time render no badge.
+ */
 export function formatMinutes(m: number): string {
   if (m <= 0) return '';
-  return m >= 60 ? `${(m / 60).toFixed(1)}h` : `${m}m`;
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${h}.${String(mm).padStart(2, '0')}`;
 }

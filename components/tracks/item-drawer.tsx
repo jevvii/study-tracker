@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ItemForm } from '@/components/courses/item-form';
 import { toggleProgress, updateItemNotes } from '@/lib/data';
+import { formatMinutes } from '@/lib/progress';
 import { topicsForResource, resourcesForProject } from '@/lib/relationships';
 import { cn } from '@/lib/utils';
 import type { Item, Progress, ProgressStatus, TimeLog } from '@/lib/types';
@@ -66,7 +67,6 @@ export function ItemDrawer({
   };
 
   const loggedMinutes = timeLogs.filter((l) => l.item_id === item.id).reduce((s, l) => s + l.minutes, 0);
-  const hours = (loggedMinutes / 60).toFixed(1);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,7 +158,7 @@ export function ItemDrawer({
 
         <div className="text-sm">
           <span className="text-[var(--text-muted)]">Time logged: </span>
-          <span className="tabular-nums">{loggedMinutes > 0 ? `${hours}h (${loggedMinutes}m)` : 'none'}</span>
+          <span className="tabular-nums">{loggedMinutes > 0 ? `${formatMinutes(loggedMinutes)} (${loggedMinutes}m)` : 'none'}</span>
         </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">

@@ -32,12 +32,12 @@ describe('TaskRow', () => {
 
   it('hides the time badge when no time is logged', () => {
     render(<TaskRow item={item} status="not_started" onToggle={vi.fn()} minutes={0} />);
-    expect(screen.queryByText(/logged/)).toBeNull();
+    expect(screen.queryByText('0.00')).toBeNull();
   });
 
-  it('shows a formatted time badge when time is logged', () => {
+  it('shows an H.MM time badge when time is logged', () => {
     render(<TaskRow item={item} status="not_started" onToggle={vi.fn()} minutes={90} />);
-    expect(screen.getByText('1.5h')).toBeInTheDocument();
+    expect(screen.getByText('1.30')).toBeInTheDocument();
   });
 });
 
