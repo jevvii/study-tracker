@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber, weeklyReviewData, minutesByItem, formatMinutes } from '@/lib/progress';
+import { overallProgress, trackCounts, weeklyHours, nextStreak, currentWeekNumber, weeklyReviewData, minutesByItem, formatMinutes, studyStartDate } from '@/lib/progress';
 import type { Item, Progress, Streak, TimeLog } from '@/lib/types';
 
 const items: Item[] = [
@@ -98,10 +98,11 @@ describe('currentWeekNumber (calendar-paced)', () => {
     // courseStart 2026-08-10 (Monday) → 1 elapsed week → week 2.
     expect(currentWeekNumber(items, [], '2026-08-10', today)).toBe(2);
   });
-  it('parses a full ISO timestamp courseStart (the enrolled_at shape) without crashing', () => {
-    // enrolled_at is a timestamptz; concatenating a time suffix would yield an
-    // invalid date and crash manilaWeekStart. A Monday-anchored timestamp one
-    // week before `today`'s week must still resolve to week 2.
+  it('parses a full ISO timestamp courseStart without crashing', () => {
+    // courseStart is a Manila date key from studyStartDate, but currentWeekNumber
+    // must still parse a full timestamp robustly (concatenating a time suffix would
+    // yield an invalid date and crash manilaWeekStart). A Monday-anchored timestamp
+    // one week before `today`'s week must resolve to week 2.
     expect(currentWeekNumber(items, [], '2026-08-10T10:30:00.000Z', today)).toBe(2);
   });
   it('falls back to the completion-gated rule when courseStart is unparseable', () => {
@@ -121,6 +122,43 @@ describe('currentWeekNumber (calendar-paced)', () => {
       { user_id: 'u', item_id: id, status: 'done', completed_at: 'x', notes: null, updated_at: '' } as Progress
     ));
     expect(currentWeekNumber(items, allDone, '2026-08-10', today)).toBe(2);
+  });
+});
+
+describe('studyStartDate', () => {
+  const studyItems: Item[] = [
+    { id: 'a', course_id: 'se', track: 'plan', sort_order: 1, title: 'A', metadata: { week: 1 } },
+  ];
+
+  it('returns null when there is no focus log or completion', () => {
+    expect(studyStartDate(studyItems, [], [])).toBeNull();
+  });
+  it('uses the earliest focus log date (general no-task logs count, course-item logs count)', () => {
+    const logs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-15', minutes: 25, item_id: null, note: null },
+      { id: '2', user_id: 'u', date: '2026-08-10', minutes: 25, item_id: 'a', note: null },
+    ];
+    expect(studyStartDate(studyItems, [], logs)).toBe('2026-08-10');
+  });
+  it('uses the Manila date of an early completion when it predates every log', () => {
+    // completed_at 2026-08-03T20:00:00Z = 04:00 on 2026-08-04 Manila (UTC+8).
+    const progress: Progress[] = [
+      { user_id: 'u', item_id: 'a', status: 'done', completed_at: '2026-08-03T20:00:00Z', notes: null, updated_at: '' },
+    ];
+    const logs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-10', minutes: 25, item_id: 'a', note: null },
+    ];
+    expect(studyStartDate(studyItems, progress, logs)).toBe('2026-08-04');
+  });
+  it('ignores focus logs tied to another course and completions for other items', () => {
+    const logs: TimeLog[] = [
+      { id: '1', user_id: 'u', date: '2026-08-01', minutes: 25, item_id: 'other', note: null },
+    ];
+    const progress: Progress[] = [
+      { user_id: 'u', item_id: 'other', status: 'done', completed_at: '2026-08-02T00:00:00Z', notes: null, updated_at: '' },
+    ];
+    // Neither belongs to this course's items → no study date → null.
+    expect(studyStartDate(studyItems, progress, logs)).toBeNull();
   });
 });
 

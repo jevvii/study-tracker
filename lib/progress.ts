@@ -94,6 +94,31 @@ export function currentWeekNumber(items: Item[], progress: Progress[], courseSta
   return 12;
 }
 
+/**
+ * The date the user first studied this course: the earliest Manila date among
+ * their focus logs (time_logs for this course, plus general no-task focus logs)
+ * and item completions. null when there's no activity yet — callers fall back to
+ * the completion-gated week rule. This anchors the calendar-paced curriculum
+ * week to real study, not enrollment age.
+ */
+export function studyStartDate(items: Item[], progress: Progress[], logs: TimeLog[]): string | null {
+  const itemIds = new Set(items.map((i) => i.id));
+  const dates: string[] = [];
+  for (const l of logs) {
+    // A general (no-task) focus log counts as studying the active course; a log
+    // tied to another course's items does not.
+    if (l.item_id === null) { dates.push(l.date); continue; }
+    if (l.item_id !== null && itemIds.has(l.item_id)) dates.push(l.date);
+  }
+  for (const p of progress) {
+    if (p.status === 'done' && p.completed_at && itemIds.has(p.item_id)) {
+      dates.push(manilaDateKey(new Date(p.completed_at)));
+    }
+  }
+  dates.sort();
+  return dates[0] ?? null;
+}
+
 /** Encouraging micro-copy keyed to streak length (spec §4). */
 export function streakMicroCopy(streak: number): string {
   if (streak >= 8) return 'Unstoppable.';
