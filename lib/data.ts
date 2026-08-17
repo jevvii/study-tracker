@@ -7,7 +7,7 @@ import { ACHIEVEMENTS, computeUnlocked } from '@/lib/achievements';
 import { pickFallbackCourse } from '@/lib/course-scoping';
 import { parseImportJson } from '@/lib/course-import';
 import type { ImportError } from '@/lib/course-import';
-import type { Achievement, Course, ItemInput, JournalEntry, Mood, Progress, ProgressStatus, Settings, TimeLog, Track, UserCourse, WeeklyReview } from '@/lib/types';
+import type { Achievement, Course, Item, ItemInput, JournalEntry, Mood, Progress, ProgressStatus, Settings, TimeLog, Track, UserCourse, WeeklyReview } from '@/lib/types';
 
 const SEED_COURSE_ID = 'se-realworld';
 
@@ -82,6 +82,15 @@ export async function getDashboard() {
     timeLogs: (timeLogs.data ?? []) as TimeLog[],
     journalEntries: (journalEntries.data ?? []) as JournalEntry[],
   };
+}
+
+// The active course's items, ordered by sort_order. Used by the Quick Log FAB
+// so a manual time entry can be attributed to a specific topic/task, the same
+// way an automatic focus-session log is.
+export async function getActiveItems(): Promise<Item[]> {
+  const { supabase, courseId } = await activeCourse();
+  const { data } = await supabase.from('items').select('*').eq('course_id', courseId).order('sort_order');
+  return (data ?? []) as Item[];
 }
 
 export async function getTrack(track: Track) {

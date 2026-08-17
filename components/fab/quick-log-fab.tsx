@@ -8,17 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { logTime, createJournalEntry } from '@/lib/data';
 import { MOOD_EMOJI } from '@/lib/achievements';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { manilaDateKey } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import type { Mood } from '@/lib/types';
+import type { Item, Mood } from '@/lib/types';
 
-const today = () => new Date().toISOString().slice(0, 10);
-
-export function QuickLogFAB() {
+export function QuickLogFAB({ items }: { items: Item[] }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [minutes, setMinutes] = useState(25);
+  const [itemId, setItemId] = useState<string>('');
   const [note, setNote] = useState('');
   const [noteMood, setNoteMood] = useState<Mood>(3);
   const [logSaved, setLogSaved] = useState(false);
@@ -42,8 +43,9 @@ export function QuickLogFAB() {
   const submitLog = () => {
     const mins = Math.max(1, Math.round(minutes) || 0);
     start(async () => {
-      await logTime(mins, today(), undefined);
+      await logTime(mins, manilaDateKey(), itemId || undefined);
       setLogSaved(true);
+      setItemId('');
       setTimeout(() => { setLogSaved(false); setLogOpen(false); setExpanded(false); }, 900);
     });
   };
@@ -162,6 +164,25 @@ export function QuickLogFAB() {
                       aria-label="Minutes"
                     />
                     <span className="text-sm text-[var(--text-muted)]">minutes</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Topic</span>
+                    <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')}>
+                      <SelectTrigger id="quick-log-topic" className="w-full">
+                        <SelectValue placeholder="No specific task">
+                          {(value: string | null) => {
+                            if (!value) return 'No specific task';
+                            return items.find((i) => i.id === value)?.title ?? value;
+                          }}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No specific task</SelectItem>
+                        {items.map((i) => (
+                          <SelectItem key={i.id} value={i.id}>{i.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button size="sm" variant="ghost" onClick={() => setLogOpen(false)}>Cancel</Button>
