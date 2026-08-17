@@ -34,7 +34,7 @@ export default async function Dashboard() {
         tasksLeft={tasksLeft}
       />
       <div className="grid gap-4 md:grid-cols-2">
-        <TodayPlanCard items={weekItems} progress={progress} week={week} />
+        <TodayPlanCard items={weekItems} courseItems={items} progress={progress} week={week} />
         <StreakHoursCard
           streak={streakNum}
           longest={streak?.longest_streak ?? 0}

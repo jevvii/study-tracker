@@ -4,12 +4,10 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { logTime, createJournalEntry } from '@/lib/data';
+import { createJournalEntry } from '@/lib/data';
 import { MOOD_EMOJI } from '@/lib/achievements';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { manilaDateKey } from '@/lib/time';
+import { LogTimeForm } from '@/components/log-time-form';
 import { cn } from '@/lib/utils';
 import type { Item, Mood } from '@/lib/types';
 
@@ -18,11 +16,8 @@ export function QuickLogFAB({ items }: { items: Item[] }) {
   const [expanded, setExpanded] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
-  const [minutes, setMinutes] = useState(25);
-  const [itemId, setItemId] = useState<string>('');
   const [note, setNote] = useState('');
   const [noteMood, setNoteMood] = useState<Mood>(3);
-  const [logSaved, setLogSaved] = useState(false);
   const [noteSaved, setNoteSaved] = useState(false);
   const [pending, start] = useTransition();
 
@@ -39,16 +34,6 @@ export function QuickLogFAB({ items }: { items: Item[] }) {
 
   const dur = reduce ? 0.001 : 0.16;
   const collapseAll = () => { setExpanded(false); setLogOpen(false); setNoteOpen(false); };
-
-  const submitLog = () => {
-    const mins = Math.max(1, Math.round(minutes) || 0);
-    start(async () => {
-      await logTime(mins, manilaDateKey(), itemId || undefined);
-      setLogSaved(true);
-      setItemId('');
-      setTimeout(() => { setLogSaved(false); setLogOpen(false); setExpanded(false); }, 900);
-    });
-  };
 
   const submitNote = () => {
     const body = note.trim();
@@ -154,42 +139,11 @@ export function QuickLogFAB({ items }: { items: Item[] }) {
                 />
                 <PopoverContent align="end" side="top" sideOffset={8}>
                   <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Log study time</p>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={minutes}
-                      onChange={(e) => setMinutes(Number(e.target.value))}
-                      className="w-24"
-                      aria-label="Minutes"
-                    />
-                    <span className="text-sm text-[var(--text-muted)]">minutes</span>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Topic</span>
-                    <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')}>
-                      <SelectTrigger id="quick-log-topic" className="w-full">
-                        <SelectValue placeholder="No specific task">
-                          {(value: string | null) => {
-                            if (!value) return 'No specific task';
-                            return items.find((i) => i.id === value)?.title ?? value;
-                          }}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">No specific task</SelectItem>
-                        {items.map((i) => (
-                          <SelectItem key={i.id} value={i.id}>{i.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="ghost" onClick={() => setLogOpen(false)}>Cancel</Button>
-                    <Button size="sm" onClick={submitLog} disabled={pending}>
-                      {logSaved ? 'Logged ✓' : 'Save'}
-                    </Button>
-                  </div>
+                  <LogTimeForm
+                    items={items}
+                    onCancel={() => setLogOpen(false)}
+                    onSaved={() => { setLogOpen(false); setExpanded(false); }}
+                  />
                 </PopoverContent>
               </Popover>
             </motion.div>

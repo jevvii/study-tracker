@@ -3,19 +3,16 @@ import { useState, useTransition } from 'react';
 import { GlassCard } from './glass-card';
 import { TaskRow } from '@/components/tracks/task-row';
 import { useProgressOptimistic } from '@/lib/hooks';
-import { toggleProgress, logTime } from '@/lib/data';
+import { toggleProgress } from '@/lib/data';
 import { shouldCelebrate } from '@/lib/progress';
-import { manilaDateKey } from '@/lib/time';
 import { fireConfetti } from '@/components/confetti';
+import { LogTimeForm } from '@/components/log-time-form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import type { Item, Progress, ProgressStatus } from '@/lib/types';
 
-export function TodayPlanCard({ items, progress, week }: { items: Item[]; progress: Progress[]; week: number }) {
+export function TodayPlanCard({ items, courseItems, progress, week }: { items: Item[]; courseItems: Item[]; progress: Progress[]; week: number }) {
   const { optimistic, toggle } = useProgressOptimistic(progress);
   const [, start] = useTransition();
-  const [minutes, setMinutes] = useState('25');
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const statusOf = (id: string) => optimistic.find((p) => p.item_id === id)?.status ?? 'not_started';
@@ -31,13 +28,6 @@ export function TodayPlanCard({ items, progress, week }: { items: Item[]; progre
       fireConfetti();
     }
     start(() => { void toggleProgress(itemId, next); });
-  };
-
-  const submitTime = () => {
-    const m = Math.max(1, Math.round(Number(minutes) || 0));
-    const today = manilaDateKey();
-    setPopoverOpen(false);
-    start(() => { void logTime(m, today); });
   };
 
   return (
@@ -62,22 +52,8 @@ export function TodayPlanCard({ items, progress, week }: { items: Item[]; progre
             + Log time
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Log study time</p>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="today-minutes"
-                  type="number"
-                  min={1}
-                  value={minutes}
-                  onChange={(e) => setMinutes(e.target.value)}
-                  aria-label="Minutes studied"
-                  className="w-24"
-                />
-                <span className="text-sm text-[var(--text-muted)]">min today</span>
-              </div>
-              <Button size="sm" className="w-full" onClick={submitTime}>Save</Button>
-            </div>
+            <p className="text-sm font-medium mb-2">Log study time</p>
+            <LogTimeForm items={courseItems} onSaved={() => setPopoverOpen(false)} />
           </PopoverContent>
         </Popover>
       </div>
