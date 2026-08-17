@@ -205,13 +205,22 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
   // initial mount (where it would otherwise clobber a session restored by the
   // hydrate effect with default state); the initial secondsLeft already derives
   // from durations via useState.
+  //
+  // The deps are the *primitive* duration values, not the `durations` useMemo
+  // object: `useMemo` does not guarantee a stable return reference, so depending
+  // on the object would fire this effect (and pause the timer) on a plain
+  // revalidation re-render whose `settings` shape changed but whose actual
+  // durations did not — e.g. logTime's revalidatePath bringing in the seconds
+  // columns for the first time. That would silently pause an auto-started break
+  // mid-cycle. Comparing the values themselves means only a real duration change
+  // pauses the session.
   const durationsInitRef = useRef(false);
   useEffect(() => {
     if (!durationsInitRef.current) { durationsInitRef.current = true; return; }
     setSecondsLeft(durations[phase]);
     setRunning(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [durations]);
+  }, [durations.focus, durations.short, durations.long]);
 
   // Keyboard shortcuts: Space=start/pause, R=reset, S=skip.
   useEffect(() => {

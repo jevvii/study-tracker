@@ -226,4 +226,30 @@ describe('FocusTimer pomodoro cycle looping', () => {
     expect(screen.getByText('Focus')).toBeInTheDocument();
     expect(screen.getByText('paused')).toBeInTheDocument();
   });
+
+  it('does not pause an auto-started break when a revalidation re-renders with the same durations (settings shape change)', () => {
+    const t0 = Date.now();
+    // Seed a running focus 1s from completion.
+    sessionStorage.setItem('focus-timer:v1', JSON.stringify({
+      v: 1, phase: 'focus', running: true, focusCount: 0, itemId: '', secondsLeft: 0, endsAt: t0 + 1000,
+    }));
+    // First render: NO seconds columns on settings (e.g. a cached/stale shape) —
+    // durations fall back to the defaults (1500/300/900).
+    const { rerender } = render(<FocusTimer items={[]} todayLogs={[]} settings={null} />);
+    act(() => { vi.advanceTimersByTime(1000); });
+    // Focus completed → short break auto-started and running.
+    expect(screen.getByText('Short break')).toBeInTheDocument();
+    expect(screen.getByText('running')).toBeInTheDocument();
+    expect(screen.getByText('05:00')).toBeInTheDocument();
+
+    // logTime's revalidatePath re-fetches settings; the fresh shape now carries
+    // focus_seconds=1500 / short_break_seconds=300 / long_break_seconds=900 —
+    // identical durations, but a different `settings` object. The auto-started
+    // break must keep running (not get paused by a durations "change" that
+    // didn't actually change any value).
+    rerender(<FocusTimer items={[]} todayLogs={[]} settings={settings} />);
+    expect(screen.getByText('Short break')).toBeInTheDocument();
+    expect(screen.getByText('running')).toBeInTheDocument();
+    expect(screen.getByText('05:00')).toBeInTheDocument();
+  });
 });
