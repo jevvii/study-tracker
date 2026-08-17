@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { FocusTimer } from '@/components/focus/focus-timer';
-import type { Settings } from '@/lib/types';
+import type { Settings, Item } from '@/lib/types';
 
 // FocusTimer calls server actions; mock them so no Supabase/network runs.
 vi.mock('@/lib/data', () => ({
@@ -251,5 +251,57 @@ describe('FocusTimer pomodoro cycle looping', () => {
     expect(screen.getByText('Short break')).toBeInTheDocument();
     expect(screen.getByText('running')).toBeInTheDocument();
     expect(screen.getByText('05:00')).toBeInTheDocument();
+  });
+});
+
+describe('FocusTimer task attribution', () => {
+  const fast: Settings = { user_id: 'u1', theme: 'dark', reduce_motion: false, focus_seconds: 2, short_break_seconds: 1, long_break_seconds: 1 };
+  const c4: Item = { id: 'c4', course_id: 'se', track: 'topic', sort_order: 1, title: 'C4 reading', metadata: {} };
+  const taskSelect = () => document.getElementById('focus-task') as HTMLElement;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-16T12:00:00Z').getTime());
+    sessionStorage.clear();
+    vi.mocked(logTime).mockClear();
+  });
+  afterEach(() => { vi.useRealTimers(); sessionStorage.clear(); });
+
+  it('locks the task select for the whole running session — including breaks', () => {
+    const t0 = Date.now();
+    // A running short break (Select used to be editable here).
+    sessionStorage.setItem('focus-timer:v1', JSON.stringify({
+      v: 1, phase: 'short', running: true, focusCount: 1, itemId: 'c4', secondsLeft: 0, endsAt: t0 + 1000,
+    }));
+    render(<FocusTimer items={[c4]} todayLogs={[]} settings={fast} />);
+    expect(taskSelect()).toBeDisabled();
+  });
+
+  it('enables the task select again once the session is stopped (reset)', () => {
+    render(<FocusTimer items={[c4]} todayLogs={[]} settings={fast} />);
+    // Stopped (not running) — the task can be (re)selected.
+    expect(taskSelect()).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(taskSelect()).toBeDisabled(); // locked once running
+    fireEvent.click(screen.getByRole('button', { name: 'Reset timer' }));
+    expect(taskSelect()).not.toBeDisabled(); // re-enabled after reset
+  });
+
+  it('funnels every focus in the continuous loop through the originally selected item', () => {
+    const t0 = Date.now();
+    sessionStorage.setItem('focus-timer:v1', JSON.stringify({
+      v: 1, phase: 'focus', running: true, focusCount: 0, itemId: 'c4', secondsLeft: 0, endsAt: t0 + 2000,
+    }));
+    render(<FocusTimer items={[c4]} todayLogs={[]} settings={fast} />);
+    // Focus #1 completes -> logs to C4, auto-starts the short break.
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(logTime).toHaveBeenLastCalledWith(expect.any(Number), expect.any(String), 'c4');
+    // Short break completes -> auto-starts focus #2.
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(screen.getByText('Focus')).toBeInTheDocument();
+    // Focus #2 completes -> must ALSO log to C4 (attribution persists across the loop).
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(logTime).toHaveBeenLastCalledWith(expect.any(Number), expect.any(String), 'c4');
+    expect(vi.mocked(logTime).mock.calls.every((c) => c[2] === 'c4')).toBe(true);
   });
 });

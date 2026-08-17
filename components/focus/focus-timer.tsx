@@ -408,7 +408,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
         {/* Task attribution */}
         <div className="w-full">
           <label htmlFor="focus-task" className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-1.5 block">Logging time To</label>
-          <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')} disabled={focusRunning}>
+          <Select value={itemId} onValueChange={(v) => setItemId(v ?? '')} disabled={running}>
             <SelectTrigger id="focus-task" className="w-full">
               <SelectValue placeholder="No specific task">
                 {(value: string | null) => {
@@ -424,7 +424,7 @@ export function FocusTimer({ items, todayLogs, settings }: { items: Item[]; toda
               ))}
             </SelectContent>
           </Select>
-          {focusRunning && <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">Locked until this focus session ends.</p>}
+          {running && <p className="mt-1.5 text-[11px] text-[var(--text-muted)]">Locked for this session — reset to change the task.</p>}
         </div>
 
         {/* Durations */}
