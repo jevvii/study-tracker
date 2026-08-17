@@ -74,8 +74,13 @@ function planMaxWeek(items: Item[]): number {
  * item" rule — the previous behavior — so callers without a start date keep working.
  */
 export function currentWeekNumber(items: Item[], progress: Progress[], courseStart?: string | null, today: Date = new Date()): number {
-  if (courseStart) {
-    const startMonday = manilaWeekStart(new Date(courseStart + 'T00:00:00Z'));
+  // courseStart is the active enrollment's enrolled_at — a full ISO timestamp
+  // (e.g. 2026-08-01T10:00:00.000Z). Parse it directly; do NOT append a time
+  // suffix, which would turn a timestamp into an invalid date string and crash
+  // manilaWeekStart's Intl.DateTimeFormat call (server error on the dashboard).
+  const start = courseStart ? new Date(courseStart) : null;
+  if (start && !isNaN(start.getTime())) {
+    const startMonday = manilaWeekStart(start);
     const nowMonday = manilaWeekStart(today);
     const elapsed = Math.floor((nowMonday.getTime() - startMonday.getTime()) / (7 * 86_400_000));
     return Math.min(Math.max(elapsed + 1, 1), planMaxWeek(items));

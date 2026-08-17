@@ -98,6 +98,18 @@ describe('currentWeekNumber (calendar-paced)', () => {
     // courseStart 2026-08-10 (Monday) → 1 elapsed week → week 2.
     expect(currentWeekNumber(items, [], '2026-08-10', today)).toBe(2);
   });
+  it('parses a full ISO timestamp courseStart (the enrolled_at shape) without crashing', () => {
+    // enrolled_at is a timestamptz; concatenating a time suffix would yield an
+    // invalid date and crash manilaWeekStart. A Monday-anchored timestamp one
+    // week before `today`'s week must still resolve to week 2.
+    expect(currentWeekNumber(items, [], '2026-08-10T10:30:00.000Z', today)).toBe(2);
+  });
+  it('falls back to the completion-gated rule when courseStart is unparseable', () => {
+    const done: Progress[] = [
+      { user_id: 'u', item_id: 'a', status: 'done', completed_at: 'x', notes: null, updated_at: '' },
+    ];
+    expect(currentWeekNumber(items, done, 'not-a-date', today)).toBe(1);
+  });
   it('is week 1 during the course-start week', () => {
     expect(currentWeekNumber(items, [], '2026-08-17', today)).toBe(1);
   });
